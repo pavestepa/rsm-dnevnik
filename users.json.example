@@ -1,0 +1,14 @@
+[
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "login": "alice",
+    "password": "$2b$10$/RD9XJ73bi5kgyX52sw00e2iirYP8pGTBa95LDnVqf/b1llXAxUo.",
+    "phone": "+79001111111"
+  },
+  {
+    "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+    "login": "bob",
+    "password": "$2b$10$/RD9XJ73bi5kgyX52sw00e2iirYP8pGTBa95LDnVqf/b1llXAxUo.",
+    "phone": "+79002222222"
+  }
+]

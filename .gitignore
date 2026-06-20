@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
+.expo/
+web-build/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Auth users (credentials)
+users.json
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Testing
+coverage/
+
+# Native
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+android/
+ios/
+
+# Metro
+.metro-health-check*
+
+# TypeScript
+*.tsbuildinfo
+
+# Docker
+postgres-data/

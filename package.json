@@ -1,0 +1,25 @@
+{
+  "name": "rsm-dnevnik",
+  "private": true,
+  "scripts": {
+    "backend": "pnpm --filter backend",
+    "app": "pnpm --filter app",
+    "dev:backend": "docker compose up -d postgres minio minio-init redis && pnpm --filter backend start:dev",
+    "dev:app": "pnpm --filter app start",
+    "dev:app:ios": "pnpm --filter app ios",
+    "dev:app:android": "pnpm --filter app android",
+    "dev:app:prebuild": "pnpm --filter app prebuild",
+    "dev:app:prebuild:clean": "pnpm --filter app prebuild:clean",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "db:up": "docker compose up -d postgres minio minio-init redis",
+    "db:down": "docker compose down",
+    "db:migrate": "pnpm --filter backend migration:run",
+    "infra:up": "docker compose up -d postgres minio minio-init redis",
+    "s3:console": "open http://localhost:9001",
+    "users:init": "test -f users.json || cp users.json.example users.json; echo 'Run pnpm db:migrate && pnpm --filter backend seed:users after infra is up'"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
