@@ -18,8 +18,8 @@ export class RealtimeService {
     this.server?.to(userRoom(userId)).emit(event, data);
   }
 
-  async leaveChatRoom(userId: string, chatId: string): Promise<void> {
-    await this.server?.in(userRoom(userId)).socketsLeave(chatRoom(chatId));
+  leaveChatRoom(userId: string, chatId: string): void {
+    void this.server?.in(userRoom(userId)).socketsLeave(chatRoom(chatId));
   }
 
   getOnlineUserIdsInChat(

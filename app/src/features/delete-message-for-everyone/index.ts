@@ -1,0 +1,1 @@
+export { useDeleteMessageForEveryone } from './useDeleteMessageForEveryone';

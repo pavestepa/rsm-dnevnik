@@ -1,10 +1,10 @@
-import { ContactPicker } from '@/components/contacts/ContactPicker';
-import { useAddParticipant } from '@/hooks/useGroupChat';
-import { useChatDetail } from '@/hooks/useChatDetail';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useAppTheme } from '@/hooks/useAppTheme';
-import type { ChatsStackScreenProps } from '@/navigation/types';
-import type { Contact } from '@/types/contact';
+import { ContactPicker } from '@/widgets/contact-picker';
+import { useAddUser } from '@/features/add-user';
+import { useChatDetail } from '@/features/show-chat-data';
+import { useFindFromSearchTextBar } from '@/features/find-from-search-text-bar';
+import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
+import type { ChatsStackScreenProps } from '@/app/navigation/types';
+import type { Contact } from '@/entities/contact';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,12 +29,12 @@ export function AddParticipantsScreen({
   const { colors } = useAppTheme();
   const insets = useSafeAreaInsets();
 
-  const [searchQuery, setSearchQuery] = useState('');
+  const { query: searchQuery, setQuery: setSearchQuery, debouncedQuery } =
+    useFindFromSearchTextBar();
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
 
   const chatQuery = useChatDetail(chatId);
-  const debouncedQuery = useDebouncedValue(searchQuery, 300);
-  const addParticipant = useAddParticipant(chatId);
+  const addParticipant = useAddUser(chatId);
 
   const existingUserIds = useMemo(
     () => chatQuery.data?.participants.map((participant) => participant.userId) ?? [],

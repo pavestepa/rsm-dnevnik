@@ -4,6 +4,7 @@
   "scripts": {
     "backend": "pnpm --filter backend",
     "app": "pnpm --filter app",
+    "prepare": "husky",
     "dev:backend": "docker compose up -d postgres minio minio-init redis && pnpm --filter backend start:dev",
     "dev:app": "pnpm --filter app start",
     "dev:app:ios": "pnpm --filter app ios",
@@ -12,6 +13,10 @@
     "dev:app:prebuild:clean": "pnpm --filter app prebuild:clean",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "test:cov": "pnpm -r test:cov",
+    "test:e2e": "pnpm --filter backend test:e2e",
+    "check": "pnpm lint && pnpm test",
     "db:up": "docker compose up -d postgres minio minio-init redis",
     "db:down": "docker compose down",
     "db:migrate": "pnpm --filter backend migration:run",
@@ -21,5 +26,9 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2"
   }
 }

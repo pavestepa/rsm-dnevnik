@@ -11,7 +11,9 @@ import { User } from '../users/entities/user.entity';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let usersService: jest.Mocked<Pick<UsersService, 'findByLogin' | 'findById' | 'toResponse'>>;
+  let usersService: jest.Mocked<
+    Pick<UsersService, 'findByLoginOrPhone' | 'findById' | 'toResponse'>
+  >;
   let refreshTokensRepository: jest.Mocked<
     Pick<Repository<RefreshToken>, 'findOne' | 'save' | 'create'>
   >;
@@ -35,7 +37,7 @@ describe('AuthService', () => {
 
   beforeEach(async () => {
     usersService = {
-      findByLogin: jest.fn(),
+      findByLoginOrPhone: jest.fn(),
       findById: jest.fn(),
       toResponse: jest.fn(),
     };
@@ -43,10 +45,12 @@ describe('AuthService', () => {
     refreshTokensRepository = {
       findOne: jest.fn(),
       save: jest.fn(),
-      create: jest.fn().mockImplementation((value) => value),
-    } as unknown as jest.Mocked<
-      Pick<Repository<RefreshToken>, 'findOne' | 'save' | 'create'>
-    >;
+      create: jest
+        .fn()
+        .mockImplementation(
+          (value: Partial<RefreshToken>) => value as RefreshToken,
+        ),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -83,7 +87,7 @@ describe('AuthService', () => {
   });
 
   it('returns tokens for valid login', async () => {
-    usersService.findByLogin.mockResolvedValue(user);
+    usersService.findByLoginOrPhone.mockResolvedValue(user);
     usersService.toResponse.mockResolvedValue({
       id: user.id,
       name: user.name,
@@ -107,7 +111,7 @@ describe('AuthService', () => {
   });
 
   it('rejects invalid password', async () => {
-    usersService.findByLogin.mockResolvedValue(user);
+    usersService.findByLoginOrPhone.mockResolvedValue(user);
 
     await expect(
       service.login({ login: 'alice', password: 'wrong' }, '127.0.0.1'),

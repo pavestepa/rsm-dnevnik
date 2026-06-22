@@ -4,10 +4,10 @@ import {
   AuthSubtitle,
   AuthTitle,
   PrimaryButton,
-} from '@/components/auth/AuthLayout';
-import { AppLogo } from '@/components/branding/AppLogo';
-import { brandBlue } from '@/theme/colors';
-import type { AuthStackScreenProps } from '@/navigation/types';
+} from '@/shared/ui/layout/AuthLayout';
+import { AppLogo } from '@/shared/ui/logo/AppLogo';
+import { brandBlue } from '@/shared/theme/colors';
+import type { AuthStackScreenProps } from '@/app/navigation/types';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 

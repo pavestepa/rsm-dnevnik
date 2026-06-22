@@ -29,7 +29,13 @@ const ALLOWED_MIME_TYPES: Record<MediaKind, string[]> = {
     'audio/webm',
     'audio/aac',
   ],
-  [MediaKind.AVATAR]: ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'],
+  [MediaKind.AVATAR]: [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/heic',
+    'image/heif',
+  ],
 };
 
 @Injectable()

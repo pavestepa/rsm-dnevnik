@@ -1,0 +1,1 @@
+export { useDeleteGroupChat } from './useDeleteGroupChat';

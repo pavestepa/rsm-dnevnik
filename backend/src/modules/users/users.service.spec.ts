@@ -1,7 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Repository } from 'typeorm';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { MediaService } from '../media/media.service';
@@ -17,7 +16,10 @@ describe('UsersService avatar', () => {
   let mediaService: jest.Mocked<
     Pick<
       MediaService,
-      'assertOwnedUploadedMedia' | 'getPublicUrl' | 'getPublicUrlForMediaId' | 'getDownloadUrlForUser'
+      | 'assertOwnedUploadedMedia'
+      | 'getPublicUrl'
+      | 'getPublicUrlForMediaId'
+      | 'getDownloadUrlForUser'
     >
   >;
 

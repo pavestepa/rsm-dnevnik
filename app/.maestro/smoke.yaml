@@ -1,0 +1,17 @@
+appId: ru.rsm.dnevnik
+---
+- launchApp
+- assertVisible: "Sign in"
+- tapOn: "Phone"
+- inputText: "+79001111111"
+- tapOn: "Password"
+- inputText: "password123"
+- tapOn: "Sign in"
+- assertVisible: "Chats"
+- tapOn:
+    text: ".*"
+    index: 0
+- tapOn: "Message"
+- inputText: "smoke test"
+- tapOn: "Send"
+- assertVisible: "smoke test"

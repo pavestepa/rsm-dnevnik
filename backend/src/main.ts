@@ -16,11 +16,7 @@ async function bootstrap() {
 
   if (nodeEnv === 'production') {
     const secret = configService.get<string>('auth.accessTokenSecret');
-    if (
-      !secret ||
-      UNSAFE_JWT_SECRETS.includes(secret) ||
-      secret.length < 32
-    ) {
+    if (!secret || UNSAFE_JWT_SECRETS.includes(secret) || secret.length < 32) {
       throw new Error('JWT_ACCESS_SECRET must be set in production');
     }
   }
@@ -58,4 +54,4 @@ async function bootstrap() {
 
   await app.listen(port);
 }
-bootstrap();
+void bootstrap();

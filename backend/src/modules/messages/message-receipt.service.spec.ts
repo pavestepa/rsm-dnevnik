@@ -10,7 +10,9 @@ import { ChatParticipant } from '../chats/entities/chat-participant.entity';
 describe('MessageReceiptService', () => {
   let service: MessageReceiptService;
   let messagesRepository: jest.Mocked<Pick<Repository<Message>, 'findOne'>>;
-  let participantsRepository: jest.Mocked<Pick<Repository<ChatParticipant>, 'findOne'>>;
+  let participantsRepository: jest.Mocked<
+    Pick<Repository<ChatParticipant>, 'findOne'>
+  >;
   let receiptsRepository: jest.Mocked<
     Pick<Repository<MessageReceipt>, 'findOne' | 'save' | 'create'>
   >;
@@ -21,10 +23,12 @@ describe('MessageReceiptService', () => {
     receiptsRepository = {
       findOne: jest.fn(),
       save: jest.fn(),
-      create: jest.fn().mockImplementation((value) => value),
-    } as unknown as jest.Mocked<
-      Pick<Repository<MessageReceipt>, 'findOne' | 'save' | 'create'>
-    >;
+      create: jest
+        .fn()
+        .mockImplementation(
+          (value: Partial<MessageReceipt>) => value as MessageReceipt,
+        ),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

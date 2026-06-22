@@ -28,10 +28,7 @@ export class MediaController {
   }
 
   @Get(':id')
-  async getById(
-    @CurrentUserId() userId: string,
-    @Param('id') mediaId: string,
-  ) {
+  async getById(@CurrentUserId() userId: string, @Param('id') mediaId: string) {
     const media = await this.mediaService.getById(mediaId);
     if (!media) {
       throw new NotFoundException('Media not found');

@@ -25,6 +25,7 @@ import {
   CreateGroupChatDto,
   UpdateGroupChatDto,
 } from './dto/chat.dto';
+import { ChatsUnreadService } from './chats-unread.service';
 import { ChatParticipantRole, ChatType } from '../../common/enums';
 
 @Injectable()
@@ -42,6 +43,7 @@ export class ChatsService {
     private readonly realtimeService: RealtimeService,
     @Inject(forwardRef(() => PresenceService))
     private readonly presenceService: PresenceService,
+    private readonly chatsUnreadService: ChatsUnreadService,
   ) {}
 
   async createDirectChat(
@@ -57,7 +59,10 @@ export class ChatsService {
       throw new NotFoundException('Participant not found');
     }
 
-    const existing = await this.findExistingDirectChat(userId, dto.participantId);
+    const existing = await this.findExistingDirectChat(
+      userId,
+      dto.participantId,
+    );
     if (existing) {
       return this.toChatDetail(existing, userId);
     }
@@ -175,7 +180,9 @@ export class ChatsService {
             participant.phone &&
             (participant.phone.toLowerCase().includes(normalized) ||
               (normalizedDigits.length > 0 &&
-                participant.phone.replace(/\D/g, '').includes(normalizedDigits)))
+                participant.phone
+                  .replace(/\D/g, '')
+                  .includes(normalizedDigits)))
           ) {
             return true;
           }
@@ -282,7 +289,9 @@ export class ChatsService {
     const chat = await this.getGroupChatOrFail(chatId);
 
     if (!this.isAdminOrOwner(chat, userId, participation)) {
-      throw new ForbiddenException('Only admins or owner can update group chat');
+      throw new ForbiddenException(
+        'Only admins or owner can update group chat',
+      );
     }
 
     if (dto.avatarMediaId) {
@@ -295,7 +304,9 @@ export class ChatsService {
     Object.assign(chat, {
       title: dto.title ?? chat.title,
       avatarMediaId:
-        dto.avatarMediaId !== undefined ? dto.avatarMediaId : chat.avatarMediaId,
+        dto.avatarMediaId !== undefined
+          ? dto.avatarMediaId
+          : chat.avatarMediaId,
     });
 
     await this.chatsRepository.save(chat);
@@ -346,7 +357,11 @@ export class ChatsService {
       );
     }
 
-    const participantDto = await this.mapParticipant(participant, chat, actorId);
+    const participantDto = await this.mapParticipant(
+      participant,
+      chat,
+      actorId,
+    );
     this.realtimeService.emitToChat(
       chatId,
       SocketEvents.CHAT_PARTICIPANT_ADDED,
@@ -368,7 +383,9 @@ export class ChatsService {
     const chat = await this.getGroupChatOrFail(chatId);
 
     if (!this.isAdminOrOwner(chat, actorId, participation)) {
-      throw new ForbiddenException('Only admins or owner can remove participants');
+      throw new ForbiddenException(
+        'Only admins or owner can remove participants',
+      );
     }
 
     if (chat.ownerId === targetUserId) {
@@ -386,7 +403,7 @@ export class ChatsService {
     target.leftAt = new Date();
     await this.participantsRepository.save(target);
 
-    await this.realtimeService.leaveChatRoom(targetUserId, chatId);
+    this.realtimeService.leaveChatRoom(targetUserId, chatId);
 
     this.realtimeService.emitToChat(
       chatId,
@@ -434,7 +451,10 @@ export class ChatsService {
     return this.getChatById(actorId, chatId);
   }
 
-  async leaveGroup(actorId: string, chatId: string): Promise<{ success: true }> {
+  async leaveGroup(
+    actorId: string,
+    chatId: string,
+  ): Promise<{ success: true }> {
     const chat = await this.getGroupChatOrFail(chatId);
     const participation = await this.getActiveParticipation(chatId, actorId);
 
@@ -445,12 +465,16 @@ export class ChatsService {
     participation.leftAt = new Date();
     await this.participantsRepository.save(participation);
 
-    await this.realtimeService.leaveChatRoom(actorId, chatId);
+    this.realtimeService.leaveChatRoom(actorId, chatId);
 
-    this.realtimeService.emitToChat(chatId, SocketEvents.CHAT_PARTICIPANT_LEFT, {
+    this.realtimeService.emitToChat(
       chatId,
-      userId: actorId,
-    });
+      SocketEvents.CHAT_PARTICIPANT_LEFT,
+      {
+        chatId,
+        userId: actorId,
+      },
+    );
     this.realtimeService.emitToUser(actorId, SocketEvents.CHAT_UPDATED, {
       chatId,
     });
@@ -517,27 +541,11 @@ export class ChatsService {
     userId: string,
     lastReadMessageId: string | null,
   ): Promise<number> {
-    const qb = this.messagesRepository
-      .createQueryBuilder('message')
-      .where('message.chatId = :chatId', { chatId })
-      .andWhere('message.senderId != :userId', { userId });
-
-    if (lastReadMessageId) {
-      qb.andWhere(
-        `message.createdAt > COALESCE(
-          (
-            SELECT m."createdAt"
-            FROM messages m
-            WHERE m.id = :lastReadMessageId
-              AND m."deletedAt" IS NULL
-          ),
-          to_timestamp(0)
-        )`,
-        { lastReadMessageId },
-      );
-    }
-
-    return qb.getCount();
+    return this.chatsUnreadService.getUnreadCount(
+      chatId,
+      userId,
+      lastReadMessageId,
+    );
   }
 
   private async transferOwnership(
@@ -583,7 +591,9 @@ export class ChatsService {
     }
 
     if (chat.type !== ChatType.GROUP) {
-      throw new BadRequestException('This action is only available for group chats');
+      throw new BadRequestException(
+        'This action is only available for group chats',
+      );
     }
 
     return chat;
@@ -646,7 +656,7 @@ export class ChatsService {
       id: chat.id,
       type: chat.type,
       title: chat.title,
-      displayName: await this.resolveDisplayName(chat, userId),
+      displayName: this.resolveDisplayName(chat, userId),
       avatarUrl: await this.resolveAvatarUrl(chat, userId),
       unreadCount,
       isPinned: participation.pinnedAt !== null,
@@ -683,7 +693,9 @@ export class ChatsService {
     return this.toChatListItem(chat, userId, activeParticipation);
   }
 
-  private async getLastMessage(chatId: string): Promise<ChatLastMessageDto | null> {
+  private async getLastMessage(
+    chatId: string,
+  ): Promise<ChatLastMessageDto | null> {
     const message = await this.messagesRepository.findOne({
       where: { chatId, deletedAt: IsNull() },
       order: { createdAt: 'DESC' },
@@ -702,7 +714,7 @@ export class ChatsService {
     };
   }
 
-  private async resolveDisplayName(chat: Chat, userId: string): Promise<string> {
+  private resolveDisplayName(chat: Chat, userId: string): string {
     if (chat.type === ChatType.GROUP) {
       return chat.title ?? 'Group chat';
     }
@@ -759,15 +771,17 @@ export class ChatsService {
     viewerId: string,
   ): Promise<ChatParticipantDto> {
     const user =
-      participant.user ?? (await this.usersService.findById(participant.userId));
+      participant.user ??
+      (await this.usersService.findById(participant.userId));
 
     return {
       id: participant.id,
       userId: participant.userId,
       name: user?.name ?? 'Unknown',
       phone: user?.phone ?? null,
-      avatarUrl: user?.avatarUrl
-        ?? (user?.avatarMediaId
+      avatarUrl:
+        user?.avatarUrl ??
+        (user?.avatarMediaId
           ? await this.getAvatarUrlForUser(user.avatarMediaId, chat, viewerId)
           : null),
       role: participant.role,

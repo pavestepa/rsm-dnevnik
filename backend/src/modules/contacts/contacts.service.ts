@@ -77,10 +77,7 @@ export class ContactsService {
       });
     }
 
-    const displayName =
-      dto.displayName?.trim() ||
-      matchedUser?.name ||
-      phone;
+    const displayName = dto.displayName?.trim() || matchedUser?.name || phone;
 
     let contact = await this.contactsRepository.findOne({
       where: { ownerUserId, phone },
@@ -127,7 +124,8 @@ export class ContactsService {
         continue;
       }
 
-      const displayName = item.displayName?.trim() || matchedUser?.name || phone;
+      const displayName =
+        item.displayName?.trim() || matchedUser?.name || phone;
 
       const existing = await this.contactsRepository.findOne({
         where: { ownerUserId, phone },

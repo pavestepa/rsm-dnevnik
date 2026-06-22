@@ -1,20 +1,16 @@
-import { MessageBubble } from '@/components/chats/MessageBubble';
-import { MessageComposer } from '@/components/chats/MessageComposer';
-import { MessageDateSeparator } from '@/components/chats/MessageDateSeparator';
-import { useChatDetail } from '@/hooks/useChatDetail';
-import { useChatRoom } from '@/hooks/useChatSocket';
-import { useAppTheme } from '@/hooks/useAppTheme';
-import {
-  flattenMessages,
-  useMarkChatRead,
-  useMessages,
-  useSendMessage,
-} from '@/hooks/useMessages';
-import { emitMessageDelivered, getSharedChatSocket } from '@/lib/chat-socket';
-import { buildInvertedMessageListRows, type MessageListRow } from '@/lib/message-list';
-import type { ChatsStackScreenProps } from '@/navigation/types';
-import { useAuthStore } from '@/stores/auth.store';
-import type { TypingUpdateEvent } from '@/types/message';
+import { MessageBubble } from '@/entities/message';
+import { MessageComposer } from '@/entities/message';
+import { MessageDateSeparator } from '@/entities/message';
+import { useChatDetail } from '@/features/show-chat-data';
+import { useChatRoom, useMarkChatRead } from '@/features/open-chat';
+import { useSendMessage } from '@/features/send-message';
+import { flattenMessages, useMessages } from '@/features/stream-chat';
+import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
+import { emitMessageDelivered, getSharedChatSocket } from '@/shared/lib/socket/chat-socket';
+import { buildInvertedMessageListRows, type MessageListRow } from '@/entities/message';
+import type { ChatsStackScreenProps } from '@/app/navigation/types';
+import { useAuthStore } from '@/entities/session';
+import type { TypingUpdateEvent } from '@/entities/message';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';

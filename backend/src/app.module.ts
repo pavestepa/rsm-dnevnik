@@ -35,8 +35,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
               ? { target: 'pino-pretty', options: { singleLine: true } }
               : undefined,
           genReqId: (req) =>
-            (req.headers['x-request-id'] as string | undefined) ??
-            randomUUID(),
+            (req.headers['x-request-id'] as string | undefined) ?? randomUUID(),
           customProps: (req) => ({
             requestId: req.headers['x-request-id'],
           }),

@@ -300,7 +300,9 @@ export class InitialSchema1730000000000 implements MigrationInterface {
     );
     await queryRunner.query(`DROP TABLE "media"`);
     await queryRunner.query(`DROP TABLE "users"`);
-    await queryRunner.query(`DROP TYPE "public"."message_receipts_status_enum"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."message_receipts_status_enum"`,
+    );
     await queryRunner.query(`DROP TYPE "public"."messages_type_enum"`);
     await queryRunner.query(`DROP TYPE "public"."chat_participants_role_enum"`);
     await queryRunner.query(`DROP TYPE "public"."chats_type_enum"`);

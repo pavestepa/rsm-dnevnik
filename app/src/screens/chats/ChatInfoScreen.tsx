@@ -1,20 +1,17 @@
-import { ChatAvatar } from '@/components/chats/ChatAvatar';
-import { EditGroupTitleModal } from '@/components/chats/EditGroupTitleModal';
-import { ParticipantActionsMenu } from '@/components/chats/ParticipantActionsMenu';
-import {
-  useLeaveGroup,
-  useRemoveParticipant,
-  useUpdateGroup,
-  useUpdateParticipantRole,
-} from '@/hooks/useGroupChat';
-import { useChatDetail } from '@/hooks/useChatDetail';
-import { useAppTheme } from '@/hooks/useAppTheme';
+import { ChatAvatar } from '@/entities/chat';
+import { EditGroupTitleModal } from '@/widgets/group-modals';
+import { ParticipantActionsMenu } from '@/widgets/participant-menu';
+import { useLeaveGroup, useUpdateGroup } from '@/features/create-new-group';
+import { useKickUser } from '@/features/kick-user';
+import { useChangeRole } from '@/features/change-role';
+import { useChatDetail } from '@/features/show-chat-data';
+import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
 import {
   canManageGroup,
   getParticipantRoleLabel,
-} from '@/lib/group-permissions';
-import type { ChatsStackScreenProps } from '@/navigation/types';
-import { useAuthStore } from '@/stores/auth.store';
+} from '@/entities/chat';
+import type { ChatsStackScreenProps } from '@/app/navigation/types';
+import { useAuthStore } from '@/entities/session';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,8 +33,8 @@ export function ChatInfoScreen({ navigation, route }: ChatsStackScreenProps<'Cha
 
   const chatQuery = useChatDetail(chatId);
   const updateGroup = useUpdateGroup(chatId);
-  const removeParticipant = useRemoveParticipant(chatId);
-  const updateParticipantRole = useUpdateParticipantRole(chatId);
+  const removeParticipant = useKickUser(chatId);
+  const updateParticipantRole = useChangeRole(chatId);
   const leaveGroup = useLeaveGroup(chatId);
 
   const [editTitleVisible, setEditTitleVisible] = useState(false);

@@ -1,0 +1,1 @@
+export { useChangeGroupChatDescription } from './useChangeGroupChatDescription';

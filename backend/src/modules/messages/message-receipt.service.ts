@@ -121,7 +121,10 @@ export class MessageReceiptService {
         if (message.senderId !== senderId) {
           return;
         }
-        result.set(message.id, await this.getAggregateStatus(message, senderId));
+        result.set(
+          message.id,
+          await this.getAggregateStatus(message, senderId),
+        );
       }),
     );
 
@@ -138,8 +141,7 @@ export class MessageReceiptService {
 
     return participants
       .filter(
-        (participant) =>
-          !participant.leftAt && participant.userId !== senderId,
+        (participant) => !participant.leftAt && participant.userId !== senderId,
       )
       .map((participant) => participant.userId);
   }

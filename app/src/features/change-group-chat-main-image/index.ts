@@ -1,0 +1,1 @@
+export { useChangeGroupChatMainImage } from './useChangeGroupChatMainImage';

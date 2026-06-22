@@ -1,11 +1,9 @@
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { App } from 'supertest/types';
 import { io, Socket } from 'socket.io-client';
 import { createTestApp, getAppPort, login } from './test-utils';
 
 describe('WebSocket validation (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
   let socket: Socket;
 
   beforeAll(async () => {
@@ -39,18 +37,19 @@ describe('WebSocket validation (e2e)', () => {
           'message:delivered',
           { messageId: 'not-a-uuid' },
           (err: Error | null, result: { success: boolean } | undefined) => {
-          if (err) {
-            resolve();
-            return;
-          }
+            if (err) {
+              resolve();
+              return;
+            }
 
-          if (result && (result as { success: boolean }).success === false) {
-            resolve();
-            return;
-          }
+            if (result && result.success === false) {
+              resolve();
+              return;
+            }
 
-          reject(new Error('Expected WS validation failure'));
-        });
+            reject(new Error('Expected WS validation failure'));
+          },
+        );
     });
   });
 });

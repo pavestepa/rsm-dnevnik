@@ -2,16 +2,16 @@ import {
   AuthScreen,
   AuthSubtitle,
   PrimaryButton,
-} from '@/components/auth/AuthLayout';
-import { CountryPicker } from '@/components/auth/CountryPicker';
+} from '@/shared/ui/layout/AuthLayout';
+import { CountryPicker } from '@/shared/ui/auth/CountryPicker';
 import {
   formatPhoneDisplay,
   formatPhoneE164,
   getCountryByCode,
-} from '@/constants/countries';
-import type { AuthStackScreenProps } from '@/navigation/types';
-import { useOnboardingStore } from '@/stores/onboarding.store';
-import { useAppTheme } from '@/hooks/useAppTheme';
+} from '@/shared/lib/countries';
+import type { AuthStackScreenProps } from '@/app/navigation/types';
+import { useOnboardingStore } from '@/entities/session';
+import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Text, TextInput, View } from 'react-native';

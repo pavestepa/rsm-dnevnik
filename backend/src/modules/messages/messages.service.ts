@@ -24,7 +24,10 @@ import {
   UpdateMessageDto,
 } from './dto/message.dto';
 import { MessageDeliveryStatus, MessageType } from '../../common/enums';
-import { CursorPaginationDto, PaginatedResult } from '../../common/dto/pagination.dto';
+import {
+  CursorPaginationDto,
+  PaginatedResult,
+} from '../../common/dto/pagination.dto';
 import { PushService } from '../push/push.service';
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
@@ -51,10 +54,7 @@ export class MessagesService {
     chatId: string,
     pagination: CursorPaginationDto,
   ): Promise<PaginatedResult<MessageResponseDto>> {
-    const participation = await this.chatsService.getActiveParticipation(
-      chatId,
-      userId,
-    );
+    await this.chatsService.getActiveParticipation(chatId, userId);
 
     const limit = pagination.limit ?? 50;
     const qb = this.messagesRepository
@@ -134,7 +134,7 @@ export class MessagesService {
         text:
           dto.type === MessageType.TEXT
             ? dto.text!.trim()
-            : dto.caption?.trim() ?? null,
+            : (dto.caption?.trim() ?? null),
         mediaId,
         replyToId: dto.replyToId ?? null,
       }),
@@ -244,7 +244,11 @@ export class MessagesService {
     const saved = await this.messagesRepository.save(message);
     const response = await this.toResponse(saved, userId);
 
-    this.realtimeService.emitToChat(chatId, SocketEvents.MESSAGE_UPDATED, response);
+    this.realtimeService.emitToChat(
+      chatId,
+      SocketEvents.MESSAGE_UPDATED,
+      response,
+    );
     return response;
   }
 
@@ -399,11 +403,15 @@ export class MessagesService {
       message.senderId,
     );
 
-    this.realtimeService.emitToUser(message.senderId, SocketEvents.MESSAGE_STATUS, {
-      messageId: message.id,
-      chatId: message.chatId,
-      status,
-    });
+    this.realtimeService.emitToUser(
+      message.senderId,
+      SocketEvents.MESSAGE_STATUS,
+      {
+        messageId: message.id,
+        chatId: message.chatId,
+        status,
+      },
+    );
   }
 
   private validateMessagePayload(dto: CreateMessageDto): void {

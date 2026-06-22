@@ -1,17 +1,15 @@
-import { ApiError } from '@/api/client';
+import { ApiError } from '@/shared/api/client';
 import {
   AuthScreen,
   AuthSubtitle,
   LinkButton,
   PrimaryButton,
-} from '@/components/auth/AuthLayout';
-import { uploadAvatarImage } from '@/lib/avatar-upload';
-import { useAppTheme } from '@/hooks/useAppTheme';
-import type { ProfileStackScreenProps } from '@/navigation/types';
-import { userApi } from '@/services/api';
-import { useAuthStore } from '@/stores/auth.store';
-import { useOnboardingStore } from '@/stores/onboarding.store';
-import { whatsAppTeal } from '@/theme/colors';
+} from '@/shared/ui/layout/AuthLayout';
+import { useCompleteOnboardingProfile } from '@/features/sign-in-with-password';
+import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
+import type { ProfileStackScreenProps } from '@/app/navigation/types';
+import { useOnboardingStore } from '@/entities/session';
+import { whatsAppTeal } from '@/shared/theme/colors';
 import * as ImagePicker from 'expo-image-picker';
 import type { ImagePickerAsset } from 'expo-image-picker';
 import { useState } from 'react';
@@ -24,9 +22,8 @@ export function AvatarUploadScreen(_props: ProfileStackScreenProps<'AvatarUpload
   const profileName = useOnboardingStore((state) => state.profileName);
   const profileBio = useOnboardingStore((state) => state.profileBio);
   const resetOnboarding = useOnboardingStore((state) => state.reset);
-  const completeProfile = useAuthStore((state) => state.completeProfile);
+  const completeProfile = useCompleteOnboardingProfile();
   const [pickedAsset, setPickedAsset] = useState<ImagePickerAsset | null>(null);
-  const [loading, setLoading] = useState(false);
 
   const pickImage = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -49,41 +46,18 @@ export function AvatarUploadScreen(_props: ProfileStackScreenProps<'AvatarUpload
     }
   };
 
-  const saveProfile = async (avatarMediaId?: string) => {
-    setLoading(true);
+  const finishProfile = async (avatarAsset?: ImagePickerAsset | null) => {
     try {
-      const user = await userApi.updateMe({
+      await completeProfile.mutateAsync({
         name: profileName,
-        bio: profileBio || undefined,
-        ...(avatarMediaId ? { avatarMediaId } : {}),
+        bio: profileBio,
+        avatarAsset,
       });
-
-      await completeProfile(user);
       resetOnboarding();
     } catch (error) {
       const message =
         error instanceof ApiError ? error.message : t('auth.profileSaveFailed');
       Alert.alert(t('common.error'), message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUploadAndFinish = async () => {
-    if (!pickedAsset) {
-      await saveProfile();
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const mediaId = await uploadAvatarImage(pickedAsset);
-      await saveProfile(mediaId);
-    } catch (error) {
-      const message =
-        error instanceof ApiError ? error.message : t('auth.profileSaveFailed');
-      Alert.alert(t('common.error'), message);
-      setLoading(false);
     }
   };
 
@@ -107,12 +81,12 @@ export function AvatarUploadScreen(_props: ProfileStackScreenProps<'AvatarUpload
       <View style={styles.actions}>
         <LinkButton
           label={t('auth.skipPhoto')}
-          onPress={() => void saveProfile()}
+          onPress={() => void finishProfile()}
         />
         <PrimaryButton
           label={t('auth.finish')}
-          onPress={() => void handleUploadAndFinish()}
-          loading={loading}
+          onPress={() => void finishProfile(pickedAsset)}
+          loading={completeProfile.isPending}
         />
       </View>
     </AuthScreen>

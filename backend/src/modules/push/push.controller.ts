@@ -11,10 +11,7 @@ export class PushController {
   constructor(private readonly pushService: PushService) {}
 
   @Post('register')
-  register(
-    @CurrentUserId() userId: string,
-    @Body() dto: RegisterPushTokenDto,
-  ) {
+  register(@CurrentUserId() userId: string, @Body() dto: RegisterPushTokenDto) {
     return this.pushService.registerToken(userId, dto);
   }
 

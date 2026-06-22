@@ -1,8 +1,8 @@
-import { useAppTheme } from '@/hooks/useAppTheme';
-import { flattenMessages, useMessages } from '@/hooks/useMessages';
-import { resolveMediaUrl } from '@/lib/media-url';
-import type { ChatsStackScreenProps } from '@/navigation/types';
-import type { Message } from '@/types/message';
+import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
+import { flattenMessages, useMessages } from '@/features/stream-chat';
+import { resolveMediaUrl } from '@/entities/media';
+import type { ChatsStackScreenProps } from '@/app/navigation/types';
+import type { Message } from '@/entities/message';
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {

@@ -1,0 +1,1 @@
+export { useChatDetail } from './useChatDetail';

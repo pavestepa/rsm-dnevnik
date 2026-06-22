@@ -21,7 +21,10 @@ describe('MediaService ACL', () => {
       providers: [
         MediaService,
         { provide: getRepositoryToken(Media), useValue: mediaRepository },
-        { provide: getRepositoryToken(Message), useValue: { findOne: jest.fn() } },
+        {
+          provide: getRepositoryToken(Message),
+          useValue: { findOne: jest.fn() },
+        },
         {
           provide: getRepositoryToken(ChatParticipant),
           useValue: { findOne: jest.fn(), createQueryBuilder: jest.fn() },
@@ -46,7 +49,9 @@ describe('MediaService ACL', () => {
       kind: MediaKind.IMAGE,
     } as Media);
 
-    await expect(service.canAccessMedia('media-1', 'user-1')).resolves.toBe(true);
+    await expect(service.canAccessMedia('media-1', 'user-1')).resolves.toBe(
+      true,
+    );
   });
 
   it('denies outsider without shared context', async () => {
@@ -57,6 +62,8 @@ describe('MediaService ACL', () => {
       kind: MediaKind.IMAGE,
     } as Media);
 
-    await expect(service.canAccessMedia('media-1', 'user-2')).resolves.toBe(false);
+    await expect(service.canAccessMedia('media-1', 'user-2')).resolves.toBe(
+      false,
+    );
   });
 });

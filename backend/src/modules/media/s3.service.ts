@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   CreateBucketCommand,
@@ -69,9 +74,7 @@ export class S3Service implements OnModuleInit {
     this.presignExpiresIn =
       this.configService.get<number>('s3.presignExpiresIn') ?? 3600;
     this.publicBaseUrl =
-      this.configService.get<string>('s3.publicBaseUrl') ??
-      endpoint ??
-      '';
+      this.configService.get<string>('s3.publicBaseUrl') ?? endpoint ?? '';
     this.forcePathStyle = forcePathStyle;
 
     const credentials =
@@ -107,9 +110,7 @@ export class S3Service implements OnModuleInit {
 
     try {
       await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
-      this.logger.log(
-        `S3 ready: bucket "${this.bucket}" at ${endpoint}`,
-      );
+      this.logger.log(`S3 ready: bucket "${this.bucket}" at ${endpoint}`);
       await this.ensureAvatarPublicRead();
       return;
     } catch (error) {
@@ -121,9 +122,7 @@ export class S3Service implements OnModuleInit {
 
     try {
       await this.client.send(new CreateBucketCommand({ Bucket: this.bucket }));
-      this.logger.log(
-        `S3 bucket "${this.bucket}" created at ${endpoint}`,
-      );
+      this.logger.log(`S3 bucket "${this.bucket}" created at ${endpoint}`);
       await this.ensureAvatarPublicRead();
     } catch (error) {
       this.logS3ConnectionHelp(error, endpoint);
@@ -186,12 +185,13 @@ export class S3Service implements OnModuleInit {
   async getUploadUrl(
     objectKey: string,
     mimeType: string,
-    _size: number,
+    size: number,
   ): Promise<string> {
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: objectKey,
       ContentType: mimeType,
+      ContentLength: size,
     });
 
     return getSignedUrl(this.uploadClient, command, {
@@ -298,7 +298,10 @@ export class S3Service implements OnModuleInit {
     return this.presignExpiresIn;
   }
 
-  private resolveExtension(fileName: string | undefined, mimeType: string): string {
+  private resolveExtension(
+    fileName: string | undefined,
+    mimeType: string,
+  ): string {
     const clientExtension = fileName?.includes('.')
       ? fileName.slice(fileName.lastIndexOf('.')).toLowerCase()
       : '';
@@ -314,10 +317,7 @@ export class S3Service implements OnModuleInit {
       throw new BadRequestException(`Unsupported mime type: ${mimeType}`);
     }
 
-    if (
-      clientExtension &&
-      !allowedExtensions.includes(clientExtension)
-    ) {
+    if (clientExtension && !allowedExtensions.includes(clientExtension)) {
       throw new BadRequestException(
         `File extension ${clientExtension} does not match mime type ${mimeType}`,
       );

@@ -1,14 +1,16 @@
-import { ApiError } from '@/api/client';
-import { ProfileEditModal } from '@/components/settings/ProfileEditModal';
-import { ProfileSettingsRow } from '@/components/settings/ProfileSettingsRow';
-import { uploadAvatarImage, formatUploadError } from '@/lib/avatar-upload';
-import { resolveMediaUrl } from '@/lib/media-url';
-import { useAppTheme } from '@/hooks/useAppTheme';
-import { getScrollContentProps } from '@/navigation/nativeHeaderOptions';
-import type { SettingsStackScreenProps } from '@/navigation/types';
-import { userApi } from '@/services/api';
-import { useAuthStore } from '@/stores/auth.store';
-import { brandBlue } from '@/theme/colors';
+import { ApiError } from '@/shared/api/client';
+import { ProfileEditModal } from '@/widgets/profile-card';
+import { ProfileSettingsRow } from '@/widgets/profile-card';
+import { formatUploadError, useChangeMainImage } from '@/features/change-main-image';
+import { useChangeDescription } from '@/features/change-description';
+import { useChangeName } from '@/features/change-name';
+import { useSignOut } from '@/features/sign-out';
+import { resolveMediaUrl } from '@/entities/media';
+import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
+import { getScrollContentProps } from '@/app/navigation/nativeHeaderOptions';
+import type { SettingsStackScreenProps } from '@/app/navigation/types';
+import { useAuthStore } from '@/entities/session';
+import { brandBlue } from '@/shared/theme/colors';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useState } from 'react';
@@ -35,15 +37,14 @@ export function SettingsScreen(_props: SettingsStackScreenProps<'Settings'>) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const user = useAuthStore((state) => state.user);
-  const updateUser = useAuthStore((state) => state.updateUser);
   const refreshUser = useAuthStore((state) => state.refreshUser);
-  const logout = useAuthStore((state) => state.logout);
+  const changeName = useChangeName();
+  const changeDescription = useChangeDescription();
+  const changeMainImage = useChangeMainImage();
+  const signOut = useSignOut();
 
   const [editField, setEditField] = useState<EditField>(null);
-  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
 
   const displayAvatarUri = resolveMediaUrl(user?.avatarUrl ?? null);
 
@@ -80,12 +81,8 @@ export function SettingsScreen(_props: SettingsStackScreenProps<'Settings'>) {
       return;
     }
 
-    setUploadingAvatar(true);
-
     try {
-      const avatarMediaId = await uploadAvatarImage(result.assets[0]);
-      const updatedUser = await userApi.updateMe({ avatarMediaId });
-      await updateUser(updatedUser);
+      await changeMainImage.mutateAsync(result.assets[0]);
       Alert.alert(t('settings.savedTitle'), t('settings.avatarSavedMessage'));
     } catch (error) {
       if (__DEV__) {
@@ -95,8 +92,6 @@ export function SettingsScreen(_props: SettingsStackScreenProps<'Settings'>) {
       const message =
         error instanceof ApiError ? error.message : formatUploadError(error);
       Alert.alert(t('common.error'), message);
-    } finally {
-      setUploadingAvatar(false);
     }
   };
 
@@ -108,22 +103,18 @@ export function SettingsScreen(_props: SettingsStackScreenProps<'Settings'>) {
       return;
     }
 
-    setSaving(true);
     try {
-      const updatedUser = await userApi.updateMe(
-        editField === 'name'
-          ? { name: trimmed }
-          : { bio: trimmed || undefined },
-      );
-      await updateUser(updatedUser);
+      if (editField === 'name') {
+        await changeName.mutateAsync(trimmed);
+      } else {
+        await changeDescription.mutateAsync(trimmed);
+      }
       setEditField(null);
       Alert.alert(t('settings.savedTitle'), t('settings.savedMessage'));
     } catch (error) {
       const message =
         error instanceof ApiError ? error.message : t('auth.profileSaveFailed');
       Alert.alert(t('common.error'), message);
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -134,8 +125,7 @@ export function SettingsScreen(_props: SettingsStackScreenProps<'Settings'>) {
         text: t('home.logout'),
         style: 'destructive',
         onPress: () => {
-          setLoggingOut(true);
-          void logout().finally(() => setLoggingOut(false));
+          void signOut.mutateAsync();
         },
       },
     ]);
@@ -143,6 +133,8 @@ export function SettingsScreen(_props: SettingsStackScreenProps<'Settings'>) {
 
   const scrollProps = getScrollContentProps();
   const aboutMutedColor = colors.textSecondary;
+  const saving = changeName.isPending || changeDescription.isPending;
+  const uploadingAvatar = changeMainImage.isPending;
 
   const avatarLeading = uploadingAvatar ? (
     <View style={[styles.avatarThumb, { backgroundColor: colors.card }]}>
@@ -219,10 +211,10 @@ export function SettingsScreen(_props: SettingsStackScreenProps<'Settings'>) {
 
         <Pressable
           onPress={handleLogout}
-          disabled={loggingOut}
+          disabled={signOut.isPending}
           style={[styles.logoutButton, { backgroundColor: colors.surface }]}
         >
-          {loggingOut ? (
+          {signOut.isPending ? (
             <ActivityIndicator color={colors.danger} />
           ) : (
             <>

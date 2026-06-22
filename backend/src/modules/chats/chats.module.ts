@@ -4,6 +4,7 @@ import { Chat } from './entities/chat.entity';
 import { ChatParticipant } from './entities/chat-participant.entity';
 import { Message } from '../messages/entities/message.entity';
 import { ChatsService } from './chats.service';
+import { ChatsUnreadService } from './chats-unread.service';
 import { ChatsController } from './chats.controller';
 import { UsersModule } from '../users/users.module';
 import { MediaModule } from '../media/media.module';
@@ -19,7 +20,7 @@ import { RealtimeModule } from '../realtime/realtime.module';
     forwardRef(() => RealtimeModule),
   ],
   controllers: [ChatsController],
-  providers: [ChatsService],
-  exports: [ChatsService],
+  providers: [ChatsService, ChatsUnreadService],
+  exports: [ChatsService, ChatsUnreadService],
 })
 export class ChatsModule {}

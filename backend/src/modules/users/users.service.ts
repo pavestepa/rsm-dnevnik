@@ -121,7 +121,7 @@ export class UsersService {
   }
 
   async toResponse(user: User, requesterId: string): Promise<UserResponseDto> {
-    let avatarUrl = await this.resolveAvatarUrl(user, requesterId);
+    const avatarUrl = await this.resolveAvatarUrl(user, requesterId);
 
     return {
       id: user.id,

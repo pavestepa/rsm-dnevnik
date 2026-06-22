@@ -1,0 +1,1 @@
+export { useSyncDeviceContacts } from './useSyncDeviceContacts';

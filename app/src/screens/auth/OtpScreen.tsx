@@ -4,10 +4,10 @@ import {
   AuthSubtitle,
   LinkButton,
   PrimaryButton,
-} from '@/components/auth/AuthLayout';
-import { ApiError } from '@/api/client';
-import type { AuthStackScreenProps } from '@/navigation/types';
-import { useAuthStore } from '@/stores/auth.store';
+} from '@/shared/ui/layout/AuthLayout';
+import { ApiError } from '@/shared/api/client';
+import { useSignInWithPassword } from '@/features/sign-in-with-password';
+import type { AuthStackScreenProps } from '@/app/navigation/types';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, View } from 'react-native';
@@ -15,9 +15,8 @@ import { Alert, StyleSheet, View } from 'react-native';
 export function OtpScreen({ navigation, route }: AuthStackScreenProps<'Otp'>) {
   const { t } = useTranslation();
   const { phoneE164, formattedPhone } = route.params;
-  const login = useAuthStore((state) => state.login);
+  const signIn = useSignInWithPassword();
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
     if (password.length < 6) {
@@ -25,15 +24,12 @@ export function OtpScreen({ navigation, route }: AuthStackScreenProps<'Otp'>) {
       return;
     }
 
-    setLoading(true);
     try {
-      await login(phoneE164, password);
+      await signIn.mutateAsync({ phoneE164, password });
     } catch (error) {
       const message =
         error instanceof ApiError ? error.message : t('auth.loginFailed');
       Alert.alert(t('auth.loginFailedTitle'), message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -64,7 +60,7 @@ export function OtpScreen({ navigation, route }: AuthStackScreenProps<'Otp'>) {
         <PrimaryButton
           label={t('auth.signIn')}
           onPress={() => void handleLogin()}
-          loading={loading}
+          loading={signIn.isPending}
           disabled={password.length < 6}
         />
       </View>

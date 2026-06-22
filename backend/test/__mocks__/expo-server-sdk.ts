@@ -1,5 +1,7 @@
 export class Expo {
-  constructor(_options?: { accessToken?: string }) {}
+  constructor(_options?: { accessToken?: string }) {
+    void _options;
+  }
 
   static isExpoPushToken(token: string): boolean {
     return token.startsWith('ExponentPushToken[');
@@ -9,10 +11,10 @@ export class Expo {
     return [messages];
   }
 
-  async sendPushNotificationsAsync(): Promise<
+  sendPushNotificationsAsync(): Promise<
     Array<{ status: 'ok' } | { status: 'error'; details?: { error?: string } }>
   > {
-    return [];
+    return Promise.resolve([]);
   }
 }
 

@@ -3,9 +3,9 @@ import {
   AuthScreen,
   AuthSubtitle,
   PrimaryButton,
-} from '@/components/auth/AuthLayout';
-import type { ProfileStackScreenProps } from '@/navigation/types';
-import { useOnboardingStore } from '@/stores/onboarding.store';
+} from '@/shared/ui/layout/AuthLayout';
+import type { ProfileStackScreenProps } from '@/app/navigation/types';
+import { useOnboardingStore } from '@/entities/session';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, View } from 'react-native';

@@ -84,7 +84,9 @@ export class ChatGateway
       await client.join(userRoom(payload.sub));
 
       const chatIds = await this.chatsService.getActiveChatIds(payload.sub);
-      await Promise.all(chatIds.map((chatId) => client.join(chatRoom(chatId))));
+      for (const chatId of chatIds) {
+        await client.join(chatRoom(chatId));
+      }
 
       const peerIds = await this.chatsService.getDirectChatPeerIds(payload.sub);
       for (const peerId of peerIds) {
@@ -108,10 +110,14 @@ export class ChatGateway
       if (!stillOnline) {
         const peerIds = await this.chatsService.getDirectChatPeerIds(userId);
         for (const peerId of peerIds) {
-          this.realtimeService.emitToUser(peerId, SocketEvents.PRESENCE_UPDATE, {
-            userId,
-            isOnline: false,
-          });
+          this.realtimeService.emitToUser(
+            peerId,
+            SocketEvents.PRESENCE_UPDATE,
+            {
+              userId,
+              isOnline: false,
+            },
+          );
         }
       }
       this.logger.log(`Client disconnected: user=${userId}`);
@@ -123,7 +129,10 @@ export class ChatGateway
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() dto: ChatJoinDto,
   ): Promise<{ success: boolean }> {
-    await this.chatsService.getActiveParticipation(dto.chatId, client.data.userId);
+    await this.chatsService.getActiveParticipation(
+      dto.chatId,
+      client.data.userId,
+    );
     await client.join(chatRoom(dto.chatId));
     return { success: true };
   }
@@ -162,7 +171,10 @@ export class ChatGateway
     @ConnectedSocket() client: AuthenticatedSocket,
     @MessageBody() dto: TypingDto,
   ): Promise<{ success: boolean }> {
-    await this.chatsService.getActiveParticipation(dto.chatId, client.data.userId);
+    await this.chatsService.getActiveParticipation(
+      dto.chatId,
+      client.data.userId,
+    );
     await this.typingService.startTyping(dto.chatId, client.data.userId);
     this.realtimeService.emitToChat(dto.chatId, SocketEvents.TYPING_UPDATE, {
       chatId: dto.chatId,

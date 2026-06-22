@@ -2,17 +2,15 @@ import { INestApplication } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
 import * as request from 'supertest';
-import { App } from 'supertest/types';
 import { Repository } from 'typeorm';
-import { createTestApp, login } from './test-utils';
+import { createTestApp, getHttpServer, login } from './test-utils';
 import { Media } from '../src/modules/media/entities/media.entity';
 import { MediaKind, MediaStatus } from '../src/common/enums';
 
 describe('Media ACL (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
   let mediaRepository: Repository<Media>;
   const aliceId = 'a1b2c3d4-e5f6-7890-abcd-ef1234567890';
-  const bobId = 'b2c3d4e5-f6a7-8901-bcde-f12345678901';
 
   beforeAll(async () => {
     app = await createTestApp();
@@ -40,7 +38,7 @@ describe('Media ACL (e2e)', () => {
 
     const bobToken = await login(app, 'bob', 'password123');
 
-    await request(app.getHttpServer())
+    await request(getHttpServer(app))
       .get(`/media/${media.id}`)
       .set('Authorization', `Bearer ${bobToken}`)
       .expect(403);

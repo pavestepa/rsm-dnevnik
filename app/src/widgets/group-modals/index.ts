@@ -1,0 +1,1 @@
+export { EditGroupTitleModal } from './EditGroupTitleModal';

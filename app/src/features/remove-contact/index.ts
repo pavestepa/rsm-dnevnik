@@ -1,0 +1,1 @@
+export { useRemoveContact } from './useRemoveContact';

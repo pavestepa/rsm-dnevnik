@@ -101,10 +101,7 @@ export class ChatsController {
   }
 
   @Post(':chatId/leave')
-  leaveGroup(
-    @CurrentUserId() userId: string,
-    @Param('chatId') chatId: string,
-  ) {
+  leaveGroup(@CurrentUserId() userId: string, @Param('chatId') chatId: string) {
     return this.chatsService.leaveGroup(userId, chatId);
   }
 

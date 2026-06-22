@@ -1,15 +1,18 @@
-import { AddContactModal } from '@/components/contacts/AddContactModal';
-import { ContactListRow } from '@/components/contacts/ContactListRow';
-import { useAddContact, useContacts, useDeleteContact, useSyncDeviceContacts } from '@/hooks/useContacts';
-import { useCreateDirectChat } from '@/hooks/useCreateDirectChat';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useAppTheme } from '@/hooks/useAppTheme';
-import { readDeviceContactsForSync, requestContactsPermission } from '@/lib/device-contacts';
-import { contactMatchesQuery, phonesEqual } from '@/lib/phone-normalize';
-import { ApiError } from '@/api/client';
-import { getScrollContentProps } from '@/navigation/nativeHeaderOptions';
-import { useAuthStore } from '@/stores/auth.store';
-import type { ContactsStackScreenProps } from '@/navigation/types';
+import { AddContactModal } from '@/widgets/contact-modals';
+import { ContactListRow } from '@/entities/contact';
+import { useContacts } from '@/features/show-contacts-list';
+import { useAddContact } from '@/features/add-new-contact';
+import { useRemoveContact } from '@/features/remove-contact';
+import { useSyncDeviceContacts } from '@/features/sync-device-contacts';
+import { useFindFromSearchTextBar } from '@/features/find-from-search-text-bar';
+import { useCreateDirectChat } from '@/features/go-to-chat';
+import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
+import { readDeviceContactsForSync, requestContactsPermission } from '@/entities/contact';
+import { contactMatchesQuery, phonesEqual } from '@/shared/lib/phone-normalize';
+import { ApiError } from '@/shared/api/client';
+import { getScrollContentProps } from '@/app/navigation/nativeHeaderOptions';
+import { useAuthStore } from '@/entities/session';
+import type { ContactsStackScreenProps } from '@/app/navigation/types';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,14 +32,13 @@ import {
 export function ContactsScreen({ navigation }: ContactsStackScreenProps<'ContactsList'>) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
-  const [searchQuery, setSearchQuery] = useState('');
   const [addModalVisible, setAddModalVisible] = useState(false);
-
-  const debouncedQuery = useDebouncedValue(searchQuery, 300);
+  const { query: searchQuery, setQuery: setSearchQuery, debouncedQuery } =
+    useFindFromSearchTextBar();
   const contactsQuery = useContacts(debouncedQuery);
   const currentUserPhone = useAuthStore((state) => state.user?.phone);
   const addContact = useAddContact();
-  const deleteContact = useDeleteContact();
+  const deleteContact = useRemoveContact();
   const syncContacts = useSyncDeviceContacts();
   const createDirect = useCreateDirectChat();
 

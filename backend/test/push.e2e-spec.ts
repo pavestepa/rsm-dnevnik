@@ -1,10 +1,9 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { App } from 'supertest/types';
-import { createTestApp, login } from './test-utils';
+import { createTestApp, getHttpServer, login } from './test-utils';
 
 describe('Push (e2e)', () => {
-  let app: INestApplication<App>;
+  let app: INestApplication;
   let aliceToken: string;
 
   beforeAll(async () => {
@@ -18,7 +17,7 @@ describe('Push (e2e)', () => {
   });
 
   it('registers expo push token', async () => {
-    await request(app.getHttpServer())
+    await request(getHttpServer(app))
       .post('/push/register')
       .set('Authorization', `Bearer ${aliceToken}`)
       .send({
@@ -27,7 +26,8 @@ describe('Push (e2e)', () => {
       })
       .expect(201)
       .expect((res) => {
-        expect(res.body.success).toBe(true);
+        const body = res.body as { success: boolean };
+        expect(body.success).toBe(true);
       });
   });
 });

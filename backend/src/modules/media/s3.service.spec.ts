@@ -37,13 +37,23 @@ describe('S3Service', () => {
 
   it('rejects blocked extensions', () => {
     expect(() =>
-      service.buildObjectKey('user-1', MediaKind.IMAGE, 'image/svg+xml', 'evil.svg'),
+      service.buildObjectKey(
+        'user-1',
+        MediaKind.IMAGE,
+        'image/svg+xml',
+        'evil.svg',
+      ),
     ).toThrow(BadRequestException);
   });
 
   it('rejects extension mismatch', () => {
     expect(() =>
-      service.buildObjectKey('user-1', MediaKind.IMAGE, 'image/png', 'photo.jpg'),
+      service.buildObjectKey(
+        'user-1',
+        MediaKind.IMAGE,
+        'image/png',
+        'photo.jpg',
+      ),
     ).toThrow(BadRequestException);
   });
 

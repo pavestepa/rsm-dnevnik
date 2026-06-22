@@ -1,9 +1,9 @@
-import { ContactPicker } from '@/components/contacts/ContactPicker';
-import { useCreateGroup } from '@/hooks/useGroupChat';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
-import { useAppTheme } from '@/hooks/useAppTheme';
-import type { ChatsStackScreenProps } from '@/navigation/types';
-import type { Contact } from '@/types/contact';
+import { ContactPicker } from '@/widgets/contact-picker';
+import { useCreateGroup } from '@/features/create-new-group';
+import { useFindFromSearchTextBar } from '@/features/find-from-search-text-bar';
+import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
+import type { ChatsStackScreenProps } from '@/app/navigation/types';
+import type { Contact } from '@/entities/contact';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,10 +27,9 @@ export function CreateGroupScreen({
   const insets = useSafeAreaInsets();
 
   const [title, setTitle] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const { query: searchQuery, setQuery: setSearchQuery, debouncedQuery } =
+    useFindFromSearchTextBar();
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
-
-  const debouncedQuery = useDebouncedValue(searchQuery, 300);
   const createGroup = useCreateGroup();
 
   const selectedUserIds = useMemo(

@@ -1,0 +1,20 @@
+name: Mobile E2E (Maestro)
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 3 * * *'
+
+jobs:
+  maestro-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Maestro flow exists
+        run: test -f app/.maestro/smoke.yaml
+      - name: Maestro smoke (placeholder)
+        run: |
+          echo "Maestro smoke flow defined at app/.maestro/smoke.yaml"
+          echo "Run locally: maestro test app/.maestro/smoke.yaml"
+          echo "Requires built dev client + running backend — enable full run when EAS artifacts are available."

@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { createTestApp } from './test-utils';
+import { createTestApp, getHttpServer } from './test-utils';
 
 describe('Health (e2e)', () => {
   let app: INestApplication;
@@ -15,11 +15,12 @@ describe('Health (e2e)', () => {
   });
 
   it('/health (GET)', () => {
-    return request(app.getHttpServer())
+    return request(getHttpServer(app))
       .get('/health')
       .expect(200)
       .expect((res) => {
-        expect(res.body.status).toBe('ok');
+        const body = res.body as { status: string };
+        expect(body.status).toBe('ok');
       });
   });
 });
