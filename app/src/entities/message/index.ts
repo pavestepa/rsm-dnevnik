@@ -8,9 +8,11 @@ export type {
   CreateMessagePayload,
   MessageStatusEvent,
   MessageDeletedEvent,
+  MessageHiddenEvent,
   TypingUpdateEvent,
 } from './model/types';
 export { messageApi } from './api/message.api';
+export type { MessagesQueryData, MessagesQueryPage } from './lib/messages-query';
 export { buildInvertedMessageListRows, buildMessageListRows } from './lib/message-list';
 export type { MessageListRow } from './lib/message-list';
 export { formatMessageTime, formatDateSeparator } from './lib/message-format';

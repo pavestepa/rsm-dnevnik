@@ -1,5 +1,5 @@
 import { api } from '@/shared/api/client';
-import type { MediaResponse, PresignUploadPayload, PresignUploadResponse } from '@/entities/session';
+import type { MediaResponse, PresignUploadPayload, PresignUploadResponse } from '../model/types';
 
 export const mediaApi = {
   presign: (payload: PresignUploadPayload) =>

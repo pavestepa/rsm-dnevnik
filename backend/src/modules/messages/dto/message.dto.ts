@@ -80,4 +80,6 @@ export class MessageResponseDto {
   createdAt: Date;
   editedAt: Date | null;
   status: MessageDeliveryStatus | null;
+  isDeleted: boolean;
+  deletedForEveryone: boolean;
 }

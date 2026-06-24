@@ -6,6 +6,7 @@ import {
   IsUUID,
   MaxLength,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateDirectChatDto {
@@ -21,7 +22,7 @@ export class CreateGroupChatDto {
 
   @IsArray()
   @ArrayMinSize(1)
-  @IsUUID('4', { each: true })
+  @IsUUID(undefined, { each: true })
   participantIds: string[];
 
   @IsOptional()
@@ -35,6 +36,12 @@ export class UpdateGroupChatDto {
   @MinLength(1)
   @MaxLength(128)
   title?: string;
+
+  @IsOptional()
+  @ValidateIf((_object, value) => value !== null)
+  @IsString()
+  @MaxLength(512)
+  description?: string | null;
 
   @IsOptional()
   @IsUUID()
@@ -63,6 +70,7 @@ export class ChatListItemDto {
   id: string;
   type: string;
   title: string | null;
+  description: string | null;
   displayName: string;
   avatarUrl: string | null;
   unreadCount: number;

@@ -14,6 +14,8 @@ export const SocketEvents = {
   TYPING_UPDATE: 'typing:update',
   MESSAGE_UPDATED: 'message:updated',
   MESSAGE_DELETED: 'message:deleted',
+  MESSAGE_HIDDEN: 'message:hidden',
+  CHAT_DELETED: 'chat:deleted',
   PRESENCE_UPDATE: 'presence:update',
 } as const;
 

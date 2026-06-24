@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { setAccessToken, setRefreshToken } from '@/shared/lib/auth-token';
 import { disconnectChatSocket } from '@/shared/lib/socket/chat-socket';
+import type { User } from '@/shared/model/user';
 import {
   clearAuthSession,
   isProfileCompleted,
@@ -8,9 +9,7 @@ import {
   markProfileCompleted,
   saveAuthSession,
 } from '../lib/secure-storage';
-import { authApi } from '@/entities/session';
-import { userApi } from '@/entities/user';
-import type { User } from '@/entities/session';
+import { authApi } from '../api/auth.api';
 
 interface AuthState {
   accessToken: string | null;
@@ -24,7 +23,6 @@ interface AuthState {
   completeProfile: (user: User) => Promise<void>;
   setUser: (user: User) => void;
   updateUser: (user: User) => Promise<void>;
-  refreshUser: () => Promise<User>;
   logout: () => Promise<void>;
 }
 
@@ -63,23 +61,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       profileCompleted: profileDone,
       isHydrated: true,
     });
-
-    try {
-      const freshUser = await userApi.getMe();
-      const { accessToken, refreshToken } = get();
-
-      if (accessToken && refreshToken) {
-        await saveAuthSession({
-          accessToken,
-          refreshToken,
-          user: freshUser,
-        });
-      }
-
-      set({ user: freshUser });
-    } catch {
-      await get().logout();
-    }
   },
 
   login: async (phoneE164, password) => {
@@ -137,12 +118,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
 
     set({ user });
-  },
-
-  refreshUser: async () => {
-    const freshUser = await userApi.getMe();
-    await get().updateUser(freshUser);
-    return freshUser;
   },
 
   logout: async () => {

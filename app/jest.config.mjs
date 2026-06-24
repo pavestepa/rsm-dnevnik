@@ -1,5 +1,5 @@
 /** @type {import('jest').Config} */
-module.exports = {
+export default {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
@@ -33,6 +33,12 @@ module.exports = {
           jsx: 'react-jsx',
           types: ['jest'],
           paths: {
+            '@/app/*': ['src/app/*'],
+            '@/screens/*': ['src/screens/*'],
+            '@/widgets/*': ['src/widgets/*'],
+            '@/features/*': ['src/features/*'],
+            '@/entities/*': ['src/entities/*'],
+            '@/shared/*': ['src/shared/*'],
             '@/*': ['src/*'],
           },
           baseUrl: '.',

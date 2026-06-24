@@ -1,4 +1,11 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Column,
+  DeleteDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { BaseEntity } from '../../../common/entities/base.entity';
 import { ChatType } from '../../../common/enums';
 import { User } from '../../users/entities/user.entity';
@@ -13,6 +20,9 @@ export class Chat extends BaseEntity {
 
   @Column({ type: 'varchar', length: 128, nullable: true })
   title: string | null;
+
+  @Column({ type: 'varchar', length: 512, nullable: true })
+  description: string | null;
 
   @Column({ type: 'uuid', nullable: true })
   avatarMediaId: string | null;
@@ -36,4 +46,7 @@ export class Chat extends BaseEntity {
 
   @OneToMany(() => Message, (message) => message.chat)
   messages: Message[];
+
+  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  deletedAt: Date | null;
 }

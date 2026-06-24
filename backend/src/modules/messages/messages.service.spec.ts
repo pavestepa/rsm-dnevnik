@@ -4,17 +4,19 @@ jest.mock('../push/push.service', () => ({
   })),
 }));
 
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, ForbiddenException } from '@nestjs/common';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Repository } from 'typeorm';
 import { ChatsService } from '../chats/chats.service';
 import { MediaService } from '../media/media.service';
 import { RealtimeService } from '../realtime/realtime.service';
+import { SocketEvents } from '../realtime/socket-events';
 import { PresenceService } from '../realtime/presence.service';
 import { PushService } from '../push/push.service';
 import { UsersService } from '../users/users.service';
 import { ChatParticipant } from '../chats/entities/chat-participant.entity';
+import { MessageUserDeletion } from './entities/message-user-deletion.entity';
 import { Message } from './entities/message.entity';
 import { MessageReceiptService } from './message-receipt.service';
 import { MessagesService } from './messages.service';
@@ -22,6 +24,9 @@ import { MessageDeliveryStatus, MessageType } from '../../common/enums';
 
 describe('MessagesService', () => {
   let service: MessagesService;
+  let messageUserDeletionsRepository: jest.Mocked<
+    Pick<Repository<MessageUserDeletion>, 'findOne' | 'create' | 'save'>
+  >;
   let messagesRepository: jest.Mocked<
     Pick<
       Repository<Message>,
@@ -38,6 +43,7 @@ describe('MessagesService', () => {
       | 'getUnreadCount'
       | 'touchChat'
       | 'getActiveParticipantUserIds'
+      | 'canDeleteMessage'
     >
   >;
   let messageReceiptService: jest.Mocked<
@@ -60,6 +66,14 @@ describe('MessagesService', () => {
       getMany: jest.fn().mockResolvedValue([]),
     };
 
+    messageUserDeletionsRepository = {
+      findOne: jest.fn().mockResolvedValue(null),
+      create: jest
+        .fn()
+        .mockImplementation((value: Partial<MessageUserDeletion>) => value),
+      save: jest.fn().mockImplementation((value) => Promise.resolve(value)),
+    };
+
     messagesRepository = {
       createQueryBuilder: jest.fn().mockReturnValue(queryBuilder),
       findOne: jest.fn(),
@@ -79,6 +93,7 @@ describe('MessagesService', () => {
       getUnreadCount: jest.fn().mockResolvedValue(0),
       touchChat: jest.fn(),
       getActiveParticipantUserIds: jest.fn().mockResolvedValue([]),
+      canDeleteMessage: jest.fn().mockResolvedValue(true),
     };
 
     messageReceiptService = {
@@ -96,6 +111,10 @@ describe('MessagesService', () => {
       providers: [
         MessagesService,
         { provide: getRepositoryToken(Message), useValue: messagesRepository },
+        {
+          provide: getRepositoryToken(MessageUserDeletion),
+          useValue: messageUserDeletionsRepository,
+        },
         {
           provide: getRepositoryToken(ChatParticipant),
           useValue: participantsRepository,
@@ -185,5 +204,113 @@ describe('MessagesService', () => {
     expect(result.id).toBe('msg-new');
     expect(chatsService.touchChat).toHaveBeenCalledWith('chat-1');
     expect(realtimeService.emitToChat).toHaveBeenCalled();
+  });
+
+  it('deletes message for everyone and returns tombstone', async () => {
+    const message = {
+      id: 'msg-1',
+      chatId: 'chat-1',
+      senderId: 'user-1',
+      type: MessageType.TEXT,
+      text: 'secret',
+      mediaId: null,
+      replyToId: null,
+      deletedAt: null,
+      createdAt: new Date(),
+      sender: { id: 'user-1', name: 'Alice' },
+      media: null,
+    } as Message;
+
+    messagesRepository.findOne.mockResolvedValue(message);
+    messagesRepository.save.mockResolvedValue(message);
+
+    const tombstone = {
+      id: 'msg-1',
+      chatId: 'chat-1',
+      type: MessageType.TEXT,
+      text: null,
+      media: null,
+      isDeleted: true,
+      deletedForEveryone: true,
+    };
+
+    jest
+      .spyOn(service as never, 'toResponse' as never)
+      .mockResolvedValue(tombstone as never);
+
+    const result = await service.deleteMessage('user-1', 'chat-1', 'msg-1');
+
+    expect(result.isDeleted).toBe(true);
+    expect(result.text).toBeNull();
+    const savedMessage = messagesRepository.save.mock.calls[0][0] as Message;
+    expect(savedMessage.deletedAt).toBeInstanceOf(Date);
+    expect(savedMessage.text).toBeNull();
+    expect(savedMessage.mediaId).toBeNull();
+    expect(savedMessage.replyToId).toBeNull();
+    expect(realtimeService.emitToChat).toHaveBeenCalledWith(
+      'chat-1',
+      SocketEvents.MESSAGE_DELETED,
+      tombstone,
+    );
+  });
+
+  it('hides message for current user', async () => {
+    const message = {
+      id: 'msg-1',
+      chatId: 'chat-1',
+    } as Message;
+
+    messagesRepository.findOne.mockResolvedValue(message);
+
+    const result = await service.hideMessageForMe('user-1', 'chat-1', 'msg-1');
+
+    expect(result.success).toBe(true);
+    expect(messageUserDeletionsRepository.save).toHaveBeenCalled();
+    expect(realtimeService.emitToUser).toHaveBeenCalledWith(
+      'user-1',
+      SocketEvents.MESSAGE_HIDDEN,
+      { chatId: 'chat-1', messageId: 'msg-1' },
+    );
+  });
+
+  it('is idempotent when message is already hidden for user', async () => {
+    const message = {
+      id: 'msg-1',
+      chatId: 'chat-1',
+    } as Message;
+
+    messagesRepository.findOne.mockResolvedValue(message);
+    messageUserDeletionsRepository.findOne.mockResolvedValue({
+      id: 'hide-1',
+      messageId: 'msg-1',
+      userId: 'user-1',
+    } as MessageUserDeletion);
+
+    const result = await service.hideMessageForMe('user-1', 'chat-1', 'msg-1');
+
+    expect(result.success).toBe(true);
+    expect(messageUserDeletionsRepository.save).not.toHaveBeenCalled();
+    expect(realtimeService.emitToUser).toHaveBeenCalledWith(
+      'user-1',
+      SocketEvents.MESSAGE_HIDDEN,
+      { chatId: 'chat-1', messageId: 'msg-1' },
+    );
+  });
+
+  it('rejects delete when user lacks permission', async () => {
+    const message = {
+      id: 'msg-1',
+      chatId: 'chat-1',
+      senderId: 'user-2',
+      deletedAt: null,
+      createdAt: new Date(),
+    } as Message;
+
+    messagesRepository.findOne.mockResolvedValue(message);
+    chatsService.canDeleteMessage.mockResolvedValue(false);
+
+    await expect(
+      service.deleteMessage('user-1', 'chat-1', 'msg-1'),
+    ).rejects.toBeInstanceOf(ForbiddenException);
   });
 });

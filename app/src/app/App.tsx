@@ -1,10 +1,9 @@
 import * as Sentry from '@sentry/react-native';
 import { AppProviders } from '@/app/providers/AppProviders';
 import { RootNavigator } from '@/app/navigation/RootNavigator';
-import { useAuthStore } from '@/entities/session';
+import { useSessionBootstrap } from '@/app/bootstrap/useSessionBootstrap';
 import { env } from '@/shared/config/env';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
 
 if (env.sentryDsn) {
   Sentry.init({
@@ -16,14 +15,7 @@ if (env.sentryDsn) {
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function App() {
-  const hydrate = useAuthStore((state) => state.hydrate);
-  const isHydrated = useAuthStore((state) => state.isHydrated);
-
-  useEffect(() => {
-    void hydrate().finally(() => {
-      void SplashScreen.hideAsync();
-    });
-  }, [hydrate]);
+  const isHydrated = useSessionBootstrap();
 
   if (!isHydrated) {
     return null;

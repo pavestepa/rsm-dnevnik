@@ -27,6 +27,8 @@ export type Message = {
   createdAt: string;
   editedAt: string | null;
   status: MessageDeliveryStatus | null;
+  isDeleted?: boolean;
+  deletedForEveryone?: boolean;
 };
 
 export type PaginatedResult<T> = {
@@ -49,7 +51,9 @@ export type MessageStatusEvent = {
   status: MessageDeliveryStatus;
 };
 
-export type MessageDeletedEvent = {
+export type MessageDeletedEvent = Message;
+
+export type MessageHiddenEvent = {
   chatId: string;
   messageId: string;
 };

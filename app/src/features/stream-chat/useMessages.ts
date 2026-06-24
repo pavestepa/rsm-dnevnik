@@ -1,24 +1,49 @@
-import { patchChatListOnNewMessage } from '@/entities/chat';
+import { patchChatListOnNewMessage } from '@/features/stream-chats-list/lib/patch-chat-list-on-message';
 import { getSharedChatSocket } from '@/shared/lib/socket/chat-socket';
-import { messageApi } from '@/entities/message';
+import {
+  messageApi,
+  type Message,
+  type MessageDeletedEvent,
+  type MessageHiddenEvent,
+  type MessageStatusEvent,
+  type MessagesQueryData,
+  type MessagesQueryPage,
+} from '@/entities/message';
 import { useAuthStore } from '@/entities/session';
-import type { Message, MessageDeletedEvent, MessageStatusEvent } from '@/entities/message';
-import { type InfiniteData, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  type QueryClient,
+  useInfiniteQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { useEffect } from 'react';
 
 const PAGE_SIZE = 40;
 
-type MessagesPage = Awaited<ReturnType<typeof messageApi.list>>;
-type MessagesInfinite = InfiniteData<MessagesPage, string | undefined>;
+function patchMessagesCache(
+  queryClient: QueryClient,
+  chatId: string,
+  updater: (current: MessagesQueryData) => MessagesQueryData,
+): void {
+  queryClient.setQueryData<MessagesQueryData>(
+    ['messages', chatId],
+    (current: MessagesQueryData | undefined) => {
+      if (!current) {
+        return current;
+      }
+
+      return updater(current);
+    },
+  );
+}
 
 export function useMessages(chatId: string | undefined) {
   const queryClient = useQueryClient();
   const currentUserId = useAuthStore((state) => state.user?.id);
 
   const query = useInfiniteQuery<
-    MessagesPage,
+    MessagesQueryPage,
     Error,
-    InfiniteData<MessagesPage, string | undefined>,
+    MessagesQueryData,
     (string | undefined)[],
     string | undefined
   >({
@@ -49,11 +74,7 @@ export function useMessages(chatId: string | undefined) {
         return;
       }
 
-      queryClient.setQueryData<MessagesInfinite>(['messages', chatId], (current) => {
-        if (!current) {
-          return current;
-        }
-
+      patchMessagesCache(queryClient, chatId, (current) => {
         const exists = current.pages.some((page) =>
           page.items.some((item) => item.id === message.id),
         );
@@ -79,19 +100,13 @@ export function useMessages(chatId: string | undefined) {
         return;
       }
 
-      queryClient.setQueryData<MessagesInfinite>(['messages', chatId], (current) => {
-        if (!current) {
-          return current;
-        }
-
-        return {
-          ...current,
-          pages: current.pages.map((page) => ({
-            ...page,
-            items: page.items.map((item) => (item.id === message.id ? message : item)),
-          })),
-        };
-      });
+      patchMessagesCache(queryClient, chatId, (current) => ({
+        ...current,
+        pages: current.pages.map((page) => ({
+          ...page,
+          items: page.items.map((item) => (item.id === message.id ? message : item)),
+        })),
+      }));
     };
 
     const updateStatus = (payload: MessageStatusEvent) => {
@@ -99,53 +114,51 @@ export function useMessages(chatId: string | undefined) {
         return;
       }
 
-      queryClient.setQueryData<MessagesInfinite>(['messages', chatId], (current) => {
-        if (!current) {
-          return current;
-        }
-
-        return {
-          ...current,
-          pages: current.pages.map((page) => ({
-            ...page,
-            items: page.items.map((item) =>
-              item.id === payload.messageId ? { ...item, status: payload.status } : item,
-            ),
-          })),
-        };
-      });
+      patchMessagesCache(queryClient, chatId, (current) => ({
+        ...current,
+        pages: current.pages.map((page) => ({
+          ...page,
+          items: page.items.map((item) =>
+            item.id === payload.messageId ? { ...item, status: payload.status } : item,
+          ),
+        })),
+      }));
     };
 
-    const removeMessage = (payload: MessageDeletedEvent) => {
+    const patchDeletedMessage = (message: MessageDeletedEvent) => {
+      if (message.chatId !== chatId) {
+        return;
+      }
+
+      updateMessage(message);
+    };
+
+    const hideMessage = (payload: MessageHiddenEvent) => {
       if (payload.chatId !== chatId) {
         return;
       }
 
-      queryClient.setQueryData<MessagesInfinite>(['messages', chatId], (current) => {
-        if (!current) {
-          return current;
-        }
-
-        return {
-          ...current,
-          pages: current.pages.map((page) => ({
-            ...page,
-            items: page.items.filter((item) => item.id !== payload.messageId),
-          })),
-        };
-      });
+      patchMessagesCache(queryClient, chatId, (current) => ({
+        ...current,
+        pages: current.pages.map((page) => ({
+          ...page,
+          items: page.items.filter((item) => item.id !== payload.messageId),
+        })),
+      }));
     };
 
     socket.on('message:new', appendMessage);
     socket.on('message:updated', updateMessage);
     socket.on('message:status', updateStatus);
-    socket.on('message:deleted', removeMessage);
+    socket.on('message:deleted', patchDeletedMessage);
+    socket.on('message:hidden', hideMessage);
 
     return () => {
       socket.off('message:new', appendMessage);
       socket.off('message:updated', updateMessage);
       socket.off('message:status', updateStatus);
-      socket.off('message:deleted', removeMessage);
+      socket.off('message:deleted', patchDeletedMessage);
+      socket.off('message:hidden', hideMessage);
     };
   }, [chatId, currentUserId, queryClient, query.data]);
 
@@ -153,7 +166,7 @@ export function useMessages(chatId: string | undefined) {
 }
 
 export function flattenMessages(
-  data: InfiniteData<MessagesPage, string | undefined> | undefined,
+  data: MessagesQueryData | undefined,
 ): Message[] {
   if (!data) {
     return [];

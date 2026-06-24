@@ -1,11 +1,7 @@
-import { patchChatListOnNewMessage } from '@/entities/chat';
-import { messageApi } from '@/entities/message';
+import { patchChatListOnNewMessage } from '@/features/stream-chats-list/lib/patch-chat-list-on-message';
+import { messageApi, type MessagesQueryData } from '@/entities/message';
 import { useAuthStore } from '@/entities/session';
-import type { InfiniteData } from '@tanstack/react-query';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-
-type MessagesPage = Awaited<ReturnType<typeof messageApi.list>>;
-type MessagesInfinite = InfiniteData<MessagesPage, string | undefined>;
 
 export function useSendMessage(chatId: string | undefined) {
   const queryClient = useQueryClient();
@@ -22,7 +18,9 @@ export function useSendMessage(chatId: string | undefined) {
         return;
       }
 
-      queryClient.setQueryData<MessagesInfinite>(['messages', chatId], (current) => {
+      queryClient.setQueryData<MessagesQueryData>(
+        ['messages', chatId],
+        (current: MessagesQueryData | undefined) => {
         if (!current) {
           return current;
         }
@@ -42,7 +40,8 @@ export function useSendMessage(chatId: string | undefined) {
         };
 
         return { ...current, pages };
-      });
+      },
+      );
 
       patchChatListOnNewMessage(queryClient, message, currentUserId);
     },

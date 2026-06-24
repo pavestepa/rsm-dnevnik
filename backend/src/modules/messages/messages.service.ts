@@ -9,6 +9,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Message } from './entities/message.entity';
+import { MessageUserDeletion } from './entities/message-user-deletion.entity';
 import { ChatParticipant } from '../chats/entities/chat-participant.entity';
 import { ChatsService } from '../chats/chats.service';
 import { MediaService } from '../media/media.service';
@@ -31,12 +32,15 @@ import {
 import { PushService } from '../push/push.service';
 
 const EDIT_WINDOW_MS = 15 * 60 * 1000;
+const DELETE_FOR_EVERYONE_WINDOW_MS = 48 * 60 * 60 * 1000;
 
 @Injectable()
 export class MessagesService {
   constructor(
     @InjectRepository(Message)
     private readonly messagesRepository: Repository<Message>,
+    @InjectRepository(MessageUserDeletion)
+    private readonly messageUserDeletionsRepository: Repository<MessageUserDeletion>,
     @InjectRepository(ChatParticipant)
     private readonly participantsRepository: Repository<ChatParticipant>,
     private readonly chatsService: ChatsService,
@@ -62,9 +66,10 @@ export class MessagesService {
       .leftJoinAndSelect('message.sender', 'sender')
       .leftJoinAndSelect('message.media', 'media')
       .where('message.chatId = :chatId', { chatId })
-      .andWhere('message.deletedAt IS NULL')
       .orderBy('message.createdAt', 'DESC')
       .take(limit + 1);
+
+    this.applyHiddenMessagesFilter(qb, userId);
 
     if (pagination.cursor) {
       const cursorMessage = await this.messagesRepository.findOne({
@@ -256,11 +261,12 @@ export class MessagesService {
     userId: string,
     chatId: string,
     messageId: string,
-  ): Promise<{ success: true }> {
+  ): Promise<MessageResponseDto> {
     await this.chatsService.getActiveParticipation(chatId, userId);
 
     const message = await this.messagesRepository.findOne({
       where: { id: messageId, chatId },
+      relations: { sender: true, media: true },
     });
 
     if (!message || message.deletedAt) {
@@ -277,10 +283,55 @@ export class MessagesService {
       throw new ForbiddenException('You cannot delete this message');
     }
 
-    message.deletedAt = new Date();
-    await this.messagesRepository.save(message);
+    if (
+      message.senderId === userId &&
+      Date.now() - message.createdAt.getTime() > DELETE_FOR_EVERYONE_WINDOW_MS
+    ) {
+      throw new BadRequestException('Delete for everyone window has expired');
+    }
 
-    this.realtimeService.emitToChat(chatId, SocketEvents.MESSAGE_DELETED, {
+    message.deletedAt = new Date();
+    message.text = null;
+    message.mediaId = null;
+    message.replyToId = null;
+    const saved = await this.messagesRepository.save(message);
+    const response = await this.toResponse(saved, userId);
+
+    this.realtimeService.emitToChat(
+      chatId,
+      SocketEvents.MESSAGE_DELETED,
+      response,
+    );
+
+    return response;
+  }
+
+  async hideMessageForMe(
+    userId: string,
+    chatId: string,
+    messageId: string,
+  ): Promise<{ success: true }> {
+    await this.chatsService.getActiveParticipation(chatId, userId);
+
+    const message = await this.messagesRepository.findOne({
+      where: { id: messageId, chatId },
+    });
+
+    if (!message) {
+      throw new NotFoundException('Message not found');
+    }
+
+    const existing = await this.messageUserDeletionsRepository.findOne({
+      where: { messageId, userId },
+    });
+
+    if (!existing) {
+      await this.messageUserDeletionsRepository.save(
+        this.messageUserDeletionsRepository.create({ messageId, userId }),
+      );
+    }
+
+    this.realtimeService.emitToUser(userId, SocketEvents.MESSAGE_HIDDEN, {
       chatId,
       messageId,
     });
@@ -306,6 +357,8 @@ export class MessagesService {
       .andWhere('message.text ILIKE :query', { query: `%${query}%` })
       .orderBy('message.createdAt', 'DESC')
       .take(limit + 1);
+
+    this.applyHiddenMessagesFilter(qb, userId);
 
     if (pagination.cursor) {
       const cursorMessage = await this.messagesRepository.findOne({
@@ -414,6 +467,19 @@ export class MessagesService {
     );
   }
 
+  private applyHiddenMessagesFilter(
+    qb: ReturnType<Repository<Message>['createQueryBuilder']>,
+    userId: string,
+  ): void {
+    qb.andWhere(
+      `NOT EXISTS (
+        SELECT 1 FROM message_user_deletions mud
+        WHERE mud."messageId" = message.id AND mud."userId" = :hiddenUserId
+      )`,
+      { hiddenUserId: userId },
+    );
+  }
+
   private validateMessagePayload(dto: CreateMessageDto): void {
     if (dto.type === MessageType.TEXT) {
       if (!dto.text?.trim()) {
@@ -459,28 +525,32 @@ export class MessagesService {
     }
 
     let status: MessageDeliveryStatus | null = null;
-    if (message.senderId === viewerId) {
+    if (message.senderId === viewerId && !message.deletedAt) {
       status = await this.messageReceiptService.getAggregateStatus(
         message,
         viewerId,
       );
     }
 
+    const isDeleted = message.deletedAt !== null;
+
     return {
       id: message.id,
       chatId: message.chatId,
       type: message.type,
-      text: message.text,
-      media,
+      text: isDeleted ? null : message.text,
+      media: isDeleted ? null : media,
       sender: {
         id: message.senderId,
         name: senderResponse?.name ?? 'Unknown',
         avatarUrl: senderResponse?.avatarUrl ?? null,
       },
-      replyToId: message.replyToId,
+      replyToId: isDeleted ? null : message.replyToId,
       createdAt: message.createdAt,
       editedAt: message.editedAt,
       status,
+      isDeleted,
+      deletedForEveryone: isDeleted,
     };
   }
 }

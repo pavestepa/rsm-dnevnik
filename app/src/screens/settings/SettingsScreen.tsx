@@ -5,6 +5,7 @@ import { formatUploadError, useChangeMainImage } from '@/features/change-main-im
 import { useChangeDescription } from '@/features/change-description';
 import { useChangeName } from '@/features/change-name';
 import { useSignOut } from '@/features/sign-out';
+import { useRefreshSessionUser } from '@/features/refresh-session-user';
 import { resolveMediaUrl } from '@/entities/media';
 import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
 import { getScrollContentProps } from '@/app/navigation/nativeHeaderOptions';
@@ -37,7 +38,7 @@ export function SettingsScreen(_props: SettingsStackScreenProps<'Settings'>) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const user = useAuthStore((state) => state.user);
-  const refreshUser = useAuthStore((state) => state.refreshUser);
+  const refreshUser = useRefreshSessionUser();
   const changeName = useChangeName();
   const changeDescription = useChangeDescription();
   const changeMainImage = useChangeMainImage();

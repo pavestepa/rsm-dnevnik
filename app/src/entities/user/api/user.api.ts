@@ -1,6 +1,6 @@
 import { api } from '@/shared/api/client';
-import type { UpdateProfilePayload, User } from '@/entities/session';
-import type { UserSearchResult } from '../../chat/model/group-types';
+import type { UpdateProfilePayload, User } from '@/shared/model/user';
+import type { UserSearchResult } from '../model/types';
 
 export const userApi = {
   getMe: () => api.get<User>('/users/me'),

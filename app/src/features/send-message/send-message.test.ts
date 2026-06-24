@@ -1,10 +1,10 @@
-import { patchChatListOnNewMessage } from '@/entities/chat';
+import { patchChatListOnNewMessage } from '@/features/stream-chats-list/lib/patch-chat-list-on-message';
 import { messageApi } from '@/entities/message';
 import { useAuthStore } from '@/entities/session';
 import { useSendMessage } from '@/features/send-message/useSendMessage';
 import { makeMessage, renderHookWithProviders, waitFor } from '@/shared/test';
 
-jest.mock('@/entities/chat', () => ({
+jest.mock('@/features/stream-chats-list/lib/patch-chat-list-on-message', () => ({
   patchChatListOnNewMessage: jest.fn(),
 }));
 

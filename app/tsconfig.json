@@ -4,6 +4,7 @@
     "strict": true,
     "ignoreDeprecations": "6.0",
     "baseUrl": ".",
+    "types": ["jest"],
     "paths": {
       "@/app/*": ["src/app/*"],
       "@/screens/*": ["src/screens/*"],
@@ -16,5 +17,5 @@
     "resolveJsonModule": true
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["**/*.test.ts", "**/__fixtures__/**"]
+  "exclude": ["**/__fixtures__/**"]
 }

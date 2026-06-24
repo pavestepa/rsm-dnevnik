@@ -59,14 +59,71 @@ describe('Messages (e2e)', () => {
       });
   });
 
-  it('deletes a message', async () => {
+  it('deletes a message for everyone as tombstone', async () => {
     await request(getHttpServer(app))
       .delete(`/chats/${chatId}/messages/${messageId}`)
       .set('Authorization', `Bearer ${aliceToken}`)
       .expect(200)
       .expect((res) => {
-        const body = res.body as { success: boolean };
-        expect(body.success).toBe(true);
+        const body = res.body as {
+          isDeleted: boolean;
+          deletedForEveryone: boolean;
+          text: string | null;
+        };
+        expect(body.isDeleted).toBe(true);
+        expect(body.deletedForEveryone).toBe(true);
+        expect(body.text).toBeNull();
+      });
+
+    await request(getHttpServer(app))
+      .get(`/chats/${chatId}/messages`)
+      .set('Authorization', `Bearer ${aliceToken}`)
+      .expect(200)
+      .expect((res) => {
+        const body = res.body as {
+          items: Array<{ id: string; isDeleted: boolean }>;
+        };
+        const deleted = body.items.find((item) => item.id === messageId);
+        expect(deleted?.isDeleted).toBe(true);
+      });
+  });
+
+  it('hides a message for the current user only', async () => {
+    const bobToken = await login(app, 'bob', 'password123');
+
+    const hiddenMessage = await request(getHttpServer(app))
+      .post(`/chats/${chatId}/messages`)
+      .set('Authorization', `Bearer ${bobToken}`)
+      .send({ type: 'text', text: 'hide me please' })
+      .expect(201);
+
+    const hiddenMessageId = (hiddenMessage.body as { id: string }).id;
+
+    await request(getHttpServer(app))
+      .post(`/chats/${chatId}/messages/${hiddenMessageId}/hide`)
+      .set('Authorization', `Bearer ${aliceToken}`)
+      .expect(201);
+
+    await request(getHttpServer(app))
+      .get(`/chats/${chatId}/messages`)
+      .set('Authorization', `Bearer ${aliceToken}`)
+      .expect(200)
+      .expect((res) => {
+        const body = res.body as { items: Array<{ id: string }> };
+        expect(body.items.some((item) => item.id === hiddenMessageId)).toBe(
+          false,
+        );
+      });
+
+    await request(getHttpServer(app))
+      .get(`/chats/${chatId}/messages`)
+      .set('Authorization', `Bearer ${bobToken}`)
+      .expect(200)
+      .expect((res) => {
+        const body = res.body as { items: Array<{ id: string }> };
+        expect(body.items.some((item) => item.id === hiddenMessageId)).toBe(
+          true,
+        );
       });
   });
 

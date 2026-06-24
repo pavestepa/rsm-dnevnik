@@ -69,4 +69,13 @@ export class MessagesController {
   ) {
     return this.messagesService.deleteMessage(userId, chatId, messageId);
   }
+
+  @Post(':messageId/hide')
+  hide(
+    @CurrentUserId() userId: string,
+    @Param('chatId') chatId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.messagesService.hideMessageForMe(userId, chatId, messageId);
+  }
 }

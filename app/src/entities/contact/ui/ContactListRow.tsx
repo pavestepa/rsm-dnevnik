@@ -1,4 +1,4 @@
-import { ChatAvatar } from '@/entities/chat';
+import { Avatar } from '@/shared/ui/Avatar';
 import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
 import type { Contact } from '@/entities/contact';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -43,7 +43,7 @@ export function ContactListRow({
         },
       ]}
     >
-      <ChatAvatar name={avatarName} avatarUrl={avatarUrl} size={48} />
+      <Avatar name={avatarName} avatarUrl={avatarUrl} size={48} />
       <View style={styles.content}>
         <Text style={[styles.name, { color: colors.text }]}>
           {contact.matchedUserName ?? contact.displayName}

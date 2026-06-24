@@ -1,6 +1,6 @@
 import { contactsApi } from '@/entities/contact';
 import { useAddContact } from '@/features/add-new-contact/useAddContact';
-import { makeContact, renderHookWithProviders, waitFor } from '@/shared/test';
+import { makeContact, renderHookWithProviders } from '@/shared/test';
 
 jest.mock('@/entities/contact', () => ({
   contactsApi: {

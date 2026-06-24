@@ -1,18 +1,30 @@
 import { MessageStatusIcon } from '@/entities/message';
 import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
 import { formatMessageTime } from '@/entities/message';
-import { resolveMediaUrl } from '@/entities/media';
+import { resolveMediaUrl } from '@/shared/lib/media-url';
 import type { Message } from '@/entities/message';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 type MessageBubbleProps = {
   message: Message;
   isOwn: boolean;
   showSenderName?: boolean;
+  selected?: boolean;
+  selectionMode?: boolean;
+  onPress?: () => void;
+  onLongPress?: () => void;
 };
 
-export function MessageBubble({ message, isOwn, showSenderName = false }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  isOwn,
+  showSenderName = false,
+  selected = false,
+  selectionMode = false,
+  onPress,
+  onLongPress,
+}: MessageBubbleProps) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const mediaUrl = resolveMediaUrl(message.media?.url ?? null);
@@ -21,11 +33,48 @@ export function MessageBubble({ message, isOwn, showSenderName = false }: Messag
   const textColor = isOwn ? colors.chatBubbleOutgoingText : colors.chatBubbleIncomingText;
   const metaColor = isOwn ? colors.chatBubbleMetaOwn : colors.chatBubbleMeta;
 
+  if (message.isDeleted) {
+    return (
+      <Pressable
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={[styles.row, isOwn ? styles.rowOwn : styles.rowOther]}
+      >
+        <View
+          style={[
+            styles.bubble,
+            styles.deletedBubble,
+            selected ? { borderColor: colors.primary, borderWidth: 2 } : undefined,
+            {
+              backgroundColor: bubbleColor,
+              borderTopLeftRadius: isOwn ? 16 : 4,
+              borderTopRightRadius: isOwn ? 4 : 16,
+            },
+          ]}
+        >
+          <Text style={[styles.deletedText, { color: metaColor }]}>
+            {isOwn ? t('chats.deletedByYou') : t('chats.deletedMessage')}
+          </Text>
+          <View style={styles.metaRow}>
+            <Text style={[styles.meta, { color: metaColor }]}>
+              {formatMessageTime(message.createdAt)}
+            </Text>
+          </View>
+        </View>
+      </Pressable>
+    );
+  }
+
   return (
-    <View style={[styles.row, isOwn ? styles.rowOwn : styles.rowOther]}>
+    <Pressable
+      onPress={onPress}
+      onLongPress={onLongPress}
+      style={[styles.row, isOwn ? styles.rowOwn : styles.rowOther]}
+    >
       <View
         style={[
           styles.bubble,
+          selected ? { borderColor: colors.primary, borderWidth: 2 } : undefined,
           {
             backgroundColor: bubbleColor,
             borderTopLeftRadius: isOwn ? 16 : 4,
@@ -62,10 +111,12 @@ export function MessageBubble({ message, isOwn, showSenderName = false }: Messag
           <Text style={[styles.meta, { color: metaColor }]}>
             {formatMessageTime(message.createdAt)}
           </Text>
-          <MessageStatusIcon status={message.status} isOwn={isOwn} />
+          {!selectionMode ? (
+            <MessageStatusIcon status={message.status} isOwn={isOwn} />
+          ) : null}
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 }
 
@@ -92,6 +143,15 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
+  },
+  deletedBubble: {
+    opacity: 0.85,
+  },
+  deletedText: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontStyle: 'italic',
+    paddingBottom: 2,
   },
   senderName: {
     fontSize: 13,

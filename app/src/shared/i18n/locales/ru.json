@@ -118,7 +118,16 @@
     "emptySubtitle": "Начните переписку, чтобы увидеть диалоги здесь.",
     "noResults": "Ничего не найдено",
     "noResultsHint": "Попробуйте изменить запрос по имени или номеру.",
-    "loadError": "Не удалось загрузить чаты"
+    "loadError": "Не удалось загрузить чаты",
+    "deletedMessage": "Сообщение удалено",
+    "deletedByYou": "Вы удалили это сообщение",
+    "deleteForMe": "Удалить у меня",
+    "deleteForEveryone": "Удалить у всех",
+    "selectMessages": "Выбрано: {{count}}",
+    "selectMessages_one": "Выбрано: {{count}}",
+    "selectMessages_few": "Выбрано: {{count}}",
+    "selectMessages_many": "Выбрано: {{count}}",
+    "deleteSelected": "Удалить сообщения"
   },
   "groups": {
     "createTitle": "Новая группа",
@@ -151,7 +160,12 @@
     "removeParticipantMessage": "Удалить {{name}} из группы?",
     "leaveTitle": "Выйти из группы",
     "leaveMessage": "Вы больше не будете получать сообщения из этой группы.",
-    "leaveConfirm": "Выйти из группы"
+    "leaveConfirm": "Выйти из группы",
+    "editGroup": "Редактировать группу",
+    "description": "Описание",
+    "descriptionPlaceholder": "Кратко опишите группу (необязательно)",
+    "deleteGroup": "Удалить группу",
+    "deleteGroupConfirm": "Группа будет удалена для всех участников. Это действие нельзя отменить."
   },
   "contacts": {
     "title": "Контакты",

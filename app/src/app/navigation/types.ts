@@ -32,6 +32,7 @@ export type ChatsStackParamList = {
   AddParticipants: { chatId: string };
   Chat: { chatId: string; typingSubtitle?: string };
   ChatInfo: { chatId: string };
+  EditGroup: { chatId: string };
   ChatMedia: { chatId: string };
 };
 

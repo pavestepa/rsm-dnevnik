@@ -104,7 +104,11 @@ describe('ChatsService', () => {
         { provide: MediaService, useValue: {} },
         {
           provide: RealtimeService,
-          useValue: { emitToChat: jest.fn(), emitToUser: jest.fn() },
+          useValue: {
+            emitToChat: jest.fn(),
+            emitToUser: jest.fn(),
+            leaveChatRoom: jest.fn(),
+          },
         },
         { provide: PresenceService, useValue: { isOnline: jest.fn() } },
         { provide: ChatsUnreadService, useValue: chatsUnreadService },
@@ -291,5 +295,91 @@ describe('ChatsService', () => {
     await expect(
       service.addParticipant('user-1', 'chat-1', 'missing-user'),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('updates group description when actor is admin', async () => {
+    const groupChat: Chat = {
+      ...baseChat,
+      type: ChatType.GROUP,
+      ownerId: 'user-1',
+      description: null,
+    };
+    const participation = {
+      ...baseChat.participants[0],
+      role: ChatParticipantRole.ADMIN,
+    };
+
+    jest
+      .spyOn(service, 'getActiveParticipation')
+      .mockResolvedValue(participation);
+    chatsRepository.findOne.mockResolvedValue(groupChat);
+    jest
+      .spyOn(service, 'getChatById')
+      .mockResolvedValue({ id: 'chat-1', description: 'New desc' } as never);
+
+    const result = await service.updateGroupChat('user-1', 'chat-1', {
+      description: 'New desc',
+    });
+
+    expect(chatsRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({ description: 'New desc' }),
+    );
+    expect(result.description).toBe('New desc');
+  });
+
+  it('allows owner to delete group chat', async () => {
+    const groupChat: Chat = {
+      ...baseChat,
+      type: ChatType.GROUP,
+      ownerId: 'user-1',
+    };
+    const participation = {
+      ...baseChat.participants[0],
+      leftAt: null,
+    };
+
+    chatsRepository.findOne.mockResolvedValue(groupChat);
+    participantsRepository.find.mockResolvedValue([
+      participation,
+    ] as ChatParticipant[]);
+
+    const result = await service.deleteGroupChat('user-1', 'chat-1');
+
+    expect(result.success).toBe(true);
+    const savedChat = chatsRepository.save.mock.calls[0][0] as Chat;
+    expect(savedChat.deletedAt).toBeInstanceOf(Date);
+    const savedParticipant = participantsRepository.save.mock
+      .calls[0][0] as ChatParticipant;
+    expect(savedParticipant.leftAt).toBeInstanceOf(Date);
+  });
+
+  it('rejects group delete for non-owner', async () => {
+    const groupChat: Chat = {
+      ...baseChat,
+      type: ChatType.GROUP,
+      ownerId: 'user-2',
+    };
+
+    chatsRepository.findOne.mockResolvedValue(groupChat);
+
+    await expect(
+      service.deleteGroupChat('user-1', 'chat-1'),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+
+  it('returns not found for dissolved chat before participation check', async () => {
+    const deletedGroup: Chat = {
+      ...baseChat,
+      type: ChatType.GROUP,
+      deletedAt: new Date(),
+    };
+
+    chatsRepository.findOne.mockResolvedValue(deletedGroup);
+    const participationSpy = jest.spyOn(service, 'getActiveParticipation');
+
+    await expect(
+      service.getChatById('user-1', 'chat-1'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(participationSpy).not.toHaveBeenCalled();
   });
 });

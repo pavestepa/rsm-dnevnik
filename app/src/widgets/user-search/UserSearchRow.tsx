@@ -1,6 +1,6 @@
 import { ChatAvatar } from '@/entities/chat';
 import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
-import type { UserSearchResult } from '@/entities/chat';
+import type { UserSearchResult } from '@/entities/user';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 

@@ -24,6 +24,7 @@ export type ChatListItem = {
   id: string;
   type: ChatType;
   title: string | null;
+  description?: string | null;
   displayName: string;
   avatarUrl: string | null;
   unreadCount: number;

@@ -118,7 +118,16 @@
     "emptySubtitle": "Start a conversation to see chats here.",
     "noResults": "No results",
     "noResultsHint": "Try a different name or phone number.",
-    "loadError": "Could not load chats"
+    "loadError": "Could not load chats",
+    "deletedMessage": "Message deleted",
+    "deletedByYou": "You deleted this message",
+    "deleteForMe": "Delete for me",
+    "deleteForEveryone": "Delete for everyone",
+    "selectMessages": "{{count}} selected",
+    "selectMessages_one": "{{count}} selected",
+    "selectMessages_few": "{{count}} selected",
+    "selectMessages_many": "{{count}} selected",
+    "deleteSelected": "Delete messages"
   },
   "groups": {
     "createTitle": "New group",
@@ -151,7 +160,12 @@
     "removeParticipantMessage": "Remove {{name}} from the group?",
     "leaveTitle": "Leave group",
     "leaveMessage": "You will no longer receive messages from this group.",
-    "leaveConfirm": "Leave group"
+    "leaveConfirm": "Leave group",
+    "editGroup": "Edit group",
+    "description": "Description",
+    "descriptionPlaceholder": "Describe the group (optional)",
+    "deleteGroup": "Delete group",
+    "deleteGroupConfirm": "The group will be deleted for all participants. This cannot be undone."
   },
   "contacts": {
     "title": "Contacts",

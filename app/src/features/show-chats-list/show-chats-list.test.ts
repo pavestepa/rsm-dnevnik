@@ -8,10 +8,6 @@ jest.mock('@/entities/chat', () => ({
     list: jest.fn(),
     pin: jest.fn(),
   },
-  patchChatUnreadCount: jest.fn(),
-  patchChatListOnNewMessage: jest.fn(),
-  patchChatPresence: jest.fn(),
-  patchMessageStatus: jest.fn(),
 }));
 
 const mockedChatApi = chatApi as jest.Mocked<typeof chatApi>;

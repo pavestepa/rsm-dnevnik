@@ -3,7 +3,110 @@ import eslint from '@eslint/js';
 import boundaries from 'eslint-plugin-boundaries';
 import tseslint from 'typescript-eslint';
 
-const layers = ['shared', 'entities', 'features', 'widgets', 'screens', 'app'];
+const entitySlices = ['chat', 'contact', 'media', 'message', 'session', 'user'];
+const featureSlices = [
+  'add-new-contact',
+  'add-user',
+  'change-description',
+  'change-group-chat-description',
+  'change-group-chat-main-image',
+  'change-main-image',
+  'change-name',
+  'change-role',
+  'create-new-group',
+  'delete-group-chat',
+  'delete-message-for-everyone',
+  'delete-message-for-me',
+  'find-contact',
+  'find-from-search-text-bar',
+  'go-to-chat',
+  'kick-user',
+  'open-chat',
+  'refresh-session-user',
+  'remove-contact',
+  'send-message',
+  'show-chat-data',
+  'show-chats-list',
+  'show-contacts-list',
+  'sign-in-with-password',
+  'sign-out',
+  'stream-chat',
+  'stream-chats-list',
+  'sync-device-contacts',
+];
+const widgetSlices = [
+  'chat-header',
+  'chat-list',
+  'contact-modals',
+  'contact-picker',
+  'group-modals',
+  'message-selection',
+  'participant-menu',
+  'profile-card',
+  'search-bar',
+  'user-search',
+];
+
+const entityTypes = entitySlices.map((slice) => `entity-${slice}`);
+const featureTypes = featureSlices.map((slice) => `feature-${slice}`);
+const widgetTypes = widgetSlices.map((slice) => `widget-${slice}`);
+
+/** @type {import('eslint-plugin-boundaries').Settings} */
+const boundaryElements = [
+  { type: 'shared', pattern: 'src/shared/**/*' },
+  { type: 'entities-root', pattern: 'src/entities/index.ts' },
+  ...entitySlices.map((slice) => ({
+    type: `entity-${slice}`,
+    pattern: `src/entities/${slice}/**/*`,
+  })),
+  ...featureSlices.map((slice) => ({
+    type: `feature-${slice}`,
+    pattern: `src/features/${slice}/**/*`,
+  })),
+  ...widgetSlices.map((slice) => ({
+    type: `widget-${slice}`,
+    pattern: `src/widgets/${slice}/**/*`,
+  })),
+  { type: 'screens', pattern: 'src/screens/**/*' },
+  { type: 'app', pattern: 'src/app/**/*' },
+];
+
+/** @type {import('eslint-plugin-boundaries').Rules} */
+const boundaryRules = [
+  { from: { type: 'shared' }, allow: { to: { type: ['shared'] } } },
+  ...entitySlices.map((slice) => ({
+    from: { type: `entity-${slice}` },
+    allow: { to: { type: ['shared', `entity-${slice}`] } },
+  })),
+  {
+    from: { type: 'entities-root' },
+    allow: { to: { type: ['shared', ...entityTypes] } },
+  },
+  ...featureSlices.map((slice) => ({
+    from: { type: `feature-${slice}` },
+    allow: { to: { type: ['shared', ...entityTypes, `feature-${slice}`] } },
+  })),
+  ...widgetSlices.map((slice) => ({
+    from: { type: `widget-${slice}` },
+    allow: {
+      to: { type: ['shared', ...entityTypes, ...featureTypes, `widget-${slice}`] },
+    },
+  })),
+  {
+    from: { type: 'screens' },
+    allow: {
+      to: { type: ['shared', ...entityTypes, ...featureTypes, ...widgetTypes, 'screens'] },
+    },
+  },
+  {
+    from: { type: 'app' },
+    allow: {
+      to: {
+        type: ['shared', ...entityTypes, ...featureTypes, ...widgetTypes, 'screens', 'app'],
+      },
+    },
+  },
+];
 
 export default tseslint.config(
   {
@@ -20,10 +123,7 @@ export default tseslint.config(
   {
     plugins: { boundaries },
     settings: {
-      'boundaries/elements': layers.map((layer) => ({
-        type: layer,
-        pattern: `src/${layer}/**/*`,
-      })),
+      'boundaries/elements': boundaryElements,
       'boundaries/ignore': ['**/*.test.ts', '**/*.test.tsx'],
     },
     rules: {
@@ -35,17 +135,7 @@ export default tseslint.config(
         'error',
         {
           default: 'disallow',
-          rules: [
-            { from: ['shared'], allow: ['shared'] },
-            { from: ['entities'], allow: ['shared', 'entities'] },
-            { from: ['features'], allow: ['shared', 'entities'] },
-            { from: ['widgets'], allow: ['shared', 'entities', 'features', 'widgets'] },
-            { from: ['screens'], allow: ['shared', 'entities', 'features', 'widgets', 'screens'] },
-            {
-              from: ['app'],
-              allow: ['shared', 'entities', 'features', 'widgets', 'screens', 'app'],
-            },
-          ],
+          rules: boundaryRules,
         },
       ],
       'no-restricted-imports': [

@@ -1,6 +1,5 @@
 import {
   Column,
-  DeleteDateColumn,
   Entity,
   Index,
   JoinColumn,
@@ -52,7 +51,7 @@ export class Message extends BaseEntity {
   @JoinColumn({ name: 'replyToId' })
   replyTo: Message | null;
 
-  @DeleteDateColumn({ type: 'timestamptz', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   deletedAt: Date | null;
 
   @Column({ type: 'timestamptz', nullable: true })

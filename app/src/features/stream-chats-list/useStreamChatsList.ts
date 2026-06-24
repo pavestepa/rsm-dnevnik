@@ -1,10 +1,10 @@
 import { queryClient } from '@/shared/lib/query-client';
+import { patchChatListOnNewMessage } from '@/features/stream-chats-list/lib/patch-chat-list-on-message';
 import {
-  patchChatListOnNewMessage,
   patchChatPresence,
   patchChatUnreadCount,
-  patchMessageStatus,
 } from '@/entities/chat';
+import { patchMessageStatus } from '@/features/stream-chats-list/lib/patch-message-status';
 import { getChatSocket } from '@/shared/lib/socket/chat-socket';
 import { useAuthStore } from '@/entities/session';
 import type { ChatUpdatedEvent, PresenceUpdateEvent } from '@/entities/chat';
@@ -67,6 +67,7 @@ export function useStreamChatsList(): void {
     socket.on('chat:participant_removed', invalidateChatDetail);
     socket.on('chat:participant_left', invalidateChatDetail);
     socket.on('group:owner_changed', invalidateChatDetail);
+    socket.on('chat:deleted', invalidateChats);
 
     return () => {
       socket.off('message:new', onMessageNew);
@@ -79,6 +80,7 @@ export function useStreamChatsList(): void {
       socket.off('chat:participant_removed', invalidateChatDetail);
       socket.off('chat:participant_left', invalidateChatDetail);
       socket.off('group:owner_changed', invalidateChatDetail);
+      socket.off('chat:deleted', invalidateChats);
     };
   }, [accessToken, currentUserId, isAuthenticated]);
 }

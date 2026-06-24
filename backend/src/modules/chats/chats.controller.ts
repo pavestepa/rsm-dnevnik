@@ -67,6 +67,14 @@ export class ChatsController {
     return this.chatsService.updateGroupChat(userId, chatId, dto);
   }
 
+  @Delete(':chatId')
+  deleteGroup(
+    @CurrentUserId() userId: string,
+    @Param('chatId') chatId: string,
+  ) {
+    return this.chatsService.deleteGroupChat(userId, chatId);
+  }
+
   @Post(':chatId/participants')
   addParticipant(
     @CurrentUserId() userId: string,

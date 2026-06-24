@@ -3,7 +3,7 @@ import type {
   Contact,
   CreateContactPayload,
   SyncContactsPayload,
-} from '@/entities/contact';
+} from '../model/types';
 
 export const contactsApi = {
   list: (query?: string) =>

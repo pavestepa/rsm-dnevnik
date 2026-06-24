@@ -1,21 +1,28 @@
 import { MessageBubble } from '@/entities/message';
 import { MessageComposer } from '@/entities/message';
 import { MessageDateSeparator } from '@/entities/message';
+import { canDeleteMessageForEveryone } from '@/features/delete-message-for-everyone/lib/can-delete-for-everyone';
 import { useChatDetail } from '@/features/show-chat-data';
 import { useChatRoom, useMarkChatRead } from '@/features/open-chat';
 import { useSendMessage } from '@/features/send-message';
+import { useDeleteMessageForEveryone } from '@/features/delete-message-for-everyone';
+import { useDeleteMessageForMe } from '@/features/delete-message-for-me';
 import { flattenMessages, useMessages } from '@/features/stream-chat';
+import { ChatConversationHeader } from '@/widgets/chat-header';
+import { MessageSelectionToolbar } from '@/widgets/message-selection';
 import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
 import { emitMessageDelivered, getSharedChatSocket } from '@/shared/lib/socket/chat-socket';
 import { buildInvertedMessageListRows, type MessageListRow } from '@/entities/message';
+import type { Message } from '@/entities/message';
 import type { ChatsStackScreenProps } from '@/app/navigation/types';
 import { useAuthStore } from '@/entities/session';
 import type { TypingUpdateEvent } from '@/entities/message';
 import { useFocusEffect } from '@react-navigation/native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -34,6 +41,8 @@ export function ChatScreen({ navigation, route }: ChatsStackScreenProps<'Chat'>)
 
   const [draft, setDraft] = useState('');
   const [typingNames, setTypingNames] = useState<string[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const markedReadRef = useRef<string | null>(null);
 
   const chatQuery = useChatDetail(chatId);
@@ -41,6 +50,8 @@ export function ChatScreen({ navigation, route }: ChatsStackScreenProps<'Chat'>)
 
   const messagesQuery = useMessages(chatId);
   const sendMessage = useSendMessage(chatId);
+  const deleteForEveryone = useDeleteMessageForEveryone(chatId);
+  const deleteForMe = useDeleteMessageForMe(chatId);
   const { mutateAsync: markReadAsync } = useMarkChatRead(chatId);
 
   const deliveredRef = useRef<Set<string>>(new Set());
@@ -52,6 +63,136 @@ export function ChatScreen({ navigation, route }: ChatsStackScreenProps<'Chat'>)
   );
 
   const rows = useMemo(() => buildInvertedMessageListRows(messages), [messages]);
+
+  const selectedMessages = useMemo(
+    () => messages.filter((message) => selectedIds.has(message.id)),
+    [messages, selectedIds],
+  );
+
+  const exitSelection = useCallback(() => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }, []);
+
+  const toggleSelection = useCallback((message: Message) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (next.has(message.id)) {
+        next.delete(message.id);
+      } else {
+        next.add(message.id);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleMessageLongPress = useCallback((message: Message) => {
+    setSelectionMode(true);
+    setSelectedIds(new Set([message.id]));
+  }, []);
+
+  const handleMessagePress = useCallback(
+    (message: Message) => {
+      if (!selectionMode) {
+        return;
+      }
+
+      toggleSelection(message);
+    },
+    [selectionMode, toggleSelection],
+  );
+
+  const canDeleteSelectedForEveryone = useMemo(
+    () =>
+      selectedMessages.length > 0 &&
+      selectedMessages.every((message) =>
+        canDeleteMessageForEveryone(message, currentUserId, chatQuery.data),
+      ),
+    [selectedMessages, currentUserId, chatQuery.data],
+  );
+
+  const handleDeleteSelected = useCallback(() => {
+    if (selectedIds.size === 0) {
+      return;
+    }
+
+    const options: {
+      text: string;
+      style?: 'cancel' | 'destructive';
+      onPress?: () => void;
+    }[] = [
+      {
+        text: t('chats.deleteForMe'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            try {
+              for (const messageId of selectedIds) {
+                await deleteForMe.mutateAsync(messageId);
+              }
+              exitSelection();
+            } catch {
+              Alert.alert(t('common.error'), t('chats.messagesLoadError'));
+            }
+          })();
+        },
+      },
+    ];
+
+    if (canDeleteSelectedForEveryone) {
+      options.unshift({
+        text: t('chats.deleteForEveryone'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            try {
+              for (const messageId of selectedIds) {
+                await deleteForEveryone.mutateAsync(messageId);
+              }
+              exitSelection();
+            } catch {
+              Alert.alert(t('common.error'), t('chats.messagesLoadError'));
+            }
+          })();
+        },
+      });
+    }
+
+    options.push({ text: t('common.cancel'), style: 'cancel' });
+    Alert.alert(t('chats.deleteSelected'), undefined, options);
+  }, [
+    canDeleteSelectedForEveryone,
+    deleteForEveryone,
+    deleteForMe,
+    exitSelection,
+    selectedIds,
+    t,
+  ]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      header: (props) =>
+        selectionMode ? (
+          <MessageSelectionToolbar
+            selectedCount={selectedIds.size}
+            onCancel={exitSelection}
+            onDelete={handleDeleteSelected}
+            labels={{
+              selected: t('chats.selectMessages', { count: selectedIds.size }),
+            }}
+          />
+        ) : (
+          <ChatConversationHeader {...props} />
+        ),
+    });
+  }, [
+    navigation,
+    selectionMode,
+    selectedIds.size,
+    exitSelection,
+    handleDeleteSelected,
+    t,
+  ]);
 
   const readCursorMessageId =
     messages.at(-1)?.id ?? chatQuery.data?.lastMessage?.id ?? null;
@@ -193,6 +334,10 @@ export function ChatScreen({ navigation, route }: ChatsStackScreenProps<'Chat'>)
         message={item.message}
         isOwn={isOwn}
         showSenderName={showSenderName}
+        selected={selectedIds.has(item.message.id)}
+        selectionMode={selectionMode}
+        onLongPress={() => handleMessageLongPress(item.message)}
+        onPress={() => handleMessagePress(item.message)}
       />
     );
   };
@@ -236,13 +381,15 @@ export function ChatScreen({ navigation, route }: ChatsStackScreenProps<'Chat'>)
       )}
 
       <View style={{ paddingBottom: insets.bottom > 0 ? 0 : 4 }}>
-        <MessageComposer
-          chatId={chatId}
-          value={draft}
-          onChangeText={setDraft}
-          onSend={handleSend}
-          sending={sendMessage.isPending}
-        />
+        {!selectionMode ? (
+          <MessageComposer
+            chatId={chatId}
+            value={draft}
+            onChangeText={setDraft}
+            onSend={handleSend}
+            sending={sendMessage.isPending}
+          />
+        ) : null}
       </View>
     </KeyboardAvoidingView>
   );

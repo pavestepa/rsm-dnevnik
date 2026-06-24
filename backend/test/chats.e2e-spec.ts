@@ -102,4 +102,39 @@ describe('Chats (e2e)', () => {
       .send({ participantId: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890' })
       .expect(400);
   });
+
+  it('updates group description', async () => {
+    await request(getHttpServer(app))
+      .patch(`/chats/${groupChatId}`)
+      .set('Authorization', `Bearer ${aliceToken}`)
+      .send({ description: 'Team chat for testing' })
+      .expect(200)
+      .expect((res) => {
+        const body = res.body as { description: string | null };
+        expect(body.description).toBe('Team chat for testing');
+      });
+  });
+
+  it('forbids non-owner from deleting group', async () => {
+    await request(getHttpServer(app))
+      .delete(`/chats/${groupChatId}`)
+      .set('Authorization', `Bearer ${bobToken}`)
+      .expect(403);
+  });
+
+  it('deletes group as owner', async () => {
+    await request(getHttpServer(app))
+      .delete(`/chats/${groupChatId}`)
+      .set('Authorization', `Bearer ${aliceToken}`)
+      .expect(200)
+      .expect((res) => {
+        const body = res.body as { success: boolean };
+        expect(body.success).toBe(true);
+      });
+
+    await request(getHttpServer(app))
+      .get(`/chats/${groupChatId}`)
+      .set('Authorization', `Bearer ${aliceToken}`)
+      .expect(404);
+  });
 });

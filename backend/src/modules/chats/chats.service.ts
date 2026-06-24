@@ -149,9 +149,11 @@ export class ChatsService {
     });
 
     let items = await Promise.all(
-      participations.map((participation) =>
-        this.toChatListItem(participation.chat, userId, participation),
-      ),
+      participations
+        .filter((participation) => !participation.chat.deletedAt)
+        .map((participation) =>
+          this.toChatListItem(participation.chat, userId, participation),
+        ),
     );
 
     if (query?.trim()) {
@@ -265,7 +267,6 @@ export class ChatsService {
   }
 
   async getChatById(userId: string, chatId: string): Promise<ChatDetailDto> {
-    const participation = await this.getActiveParticipation(chatId, userId);
     const chat = await this.chatsRepository.findOne({
       where: { id: chatId },
       relations: {
@@ -273,9 +274,11 @@ export class ChatsService {
       },
     });
 
-    if (!chat) {
+    if (!chat || chat.deletedAt) {
       throw new NotFoundException('Chat not found');
     }
+
+    const participation = await this.getActiveParticipation(chatId, userId);
 
     return this.toChatDetail(chat, userId, participation);
   }
@@ -303,6 +306,8 @@ export class ChatsService {
 
     Object.assign(chat, {
       title: dto.title ?? chat.title,
+      description:
+        dto.description !== undefined ? dto.description : chat.description,
       avatarMediaId:
         dto.avatarMediaId !== undefined
           ? dto.avatarMediaId
@@ -315,6 +320,37 @@ export class ChatsService {
       chatId,
     });
     return detail;
+  }
+
+  async deleteGroupChat(
+    userId: string,
+    chatId: string,
+  ): Promise<{ success: true }> {
+    const chat = await this.getGroupChatOrFail(chatId);
+
+    if (chat.ownerId !== userId) {
+      throw new ForbiddenException('Only the group owner can delete the group');
+    }
+
+    chat.deletedAt = new Date();
+    await this.chatsRepository.save(chat);
+
+    const participants = await this.participantsRepository.find({
+      where: { chatId, leftAt: IsNull() },
+    });
+
+    for (const participant of participants) {
+      participant.leftAt = new Date();
+      await this.participantsRepository.save(participant);
+      this.realtimeService.leaveChatRoom(participant.userId, chatId);
+      this.realtimeService.emitToUser(
+        participant.userId,
+        SocketEvents.CHAT_DELETED,
+        { chatId },
+      );
+    }
+
+    return { success: true };
   }
 
   async addParticipant(
@@ -596,6 +632,10 @@ export class ChatsService {
       );
     }
 
+    if (chat.deletedAt) {
+      throw new NotFoundException('Chat not found');
+    }
+
     return chat;
   }
 
@@ -656,6 +696,7 @@ export class ChatsService {
       id: chat.id,
       type: chat.type,
       title: chat.title,
+      description: chat.description,
       displayName: this.resolveDisplayName(chat, userId),
       avatarUrl: await this.resolveAvatarUrl(chat, userId),
       unreadCount,
@@ -697,7 +738,7 @@ export class ChatsService {
     chatId: string,
   ): Promise<ChatLastMessageDto | null> {
     const message = await this.messagesRepository.findOne({
-      where: { chatId, deletedAt: IsNull() },
+      where: { chatId },
       order: { createdAt: 'DESC' },
     });
 
@@ -708,7 +749,7 @@ export class ChatsService {
     return {
       id: message.id,
       type: message.type,
-      text: message.text,
+      text: message.deletedAt ? '🚫 Message deleted' : message.text,
       senderId: message.senderId,
       createdAt: message.createdAt,
     };

@@ -27,6 +27,7 @@ export const chatApi = {
       role,
     }),
   leaveGroup: (chatId: string) => api.post<ChatListItem>(`/chats/${chatId}/leave`),
+  deleteGroup: (chatId: string) => api.delete<{ success: true }>(`/chats/${chatId}`),
   markRead: (chatId: string, messageId?: string) =>
     api.post<{ unreadCount: number }>(`/chats/${chatId}/read`, {
       ...(messageId ? { messageId } : {}),

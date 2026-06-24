@@ -1,5 +1,5 @@
 import { api } from '@/shared/api/client';
-import type { AuthResponse, LoginPayload } from '@/entities/session';
+import type { AuthResponse, LoginPayload } from '../model/types';
 
 export const authApi = {
   login: (payload: LoginPayload) => api.post<AuthResponse>('/auth/login', payload),

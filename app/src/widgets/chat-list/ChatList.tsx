@@ -4,14 +4,12 @@ import type { Contact } from '@/entities/contact';
 import { useContacts } from '@/features/show-contacts-list';
 import { useCreateDirectChat } from '@/features/go-to-chat';
 import { useChats, usePinChat, useUnpinChat } from '@/features/show-chats-list';
-import { useFindFromSearchTextBar } from '@/features/find-from-search-text-bar';
 import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
 import { contactMatchesQuery } from '@/shared/lib/phone-normalize';
 import { getScrollContentProps } from '@/app/navigation/nativeHeaderOptions';
 import { useAuthStore } from '@/entities/session';
-import { SearchBar } from '@/widgets/search-bar';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useMemo } from 'react';
+import { useMemo, type ReactElement } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -34,14 +32,24 @@ type ListSection = {
 
 type ChatListProps = {
   onOpenChat: (chatId: string) => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  debouncedQuery: string;
+  isSearching: boolean;
+  listHeaderComponent?: ReactElement | null;
 };
 
-export function ChatList({ onOpenChat }: ChatListProps) {
+export function ChatList({
+  onOpenChat,
+  searchQuery: _searchQuery,
+  setSearchQuery,
+  debouncedQuery,
+  isSearching,
+  listHeaderComponent,
+}: ChatListProps) {
   const { t } = useTranslation();
   const { colors } = useAppTheme();
   const user = useAuthStore((state) => state.user);
-  const { query: searchQuery, setQuery: setSearchQuery, debouncedQuery, isSearching } =
-    useFindFromSearchTextBar();
 
   const chatsQuery = useChats(debouncedQuery);
   const allChatsQuery = useChats('');
@@ -191,13 +199,7 @@ export function ChatList({ onOpenChat }: ChatListProps) {
         {...scrollProps}
         sections={sections}
         keyExtractor={(item) => `${item.kind}-${item.id}`}
-        ListHeaderComponent={
-          <SearchBar
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholder={t('chats.searchPlaceholder')}
-          />
-        }
+        ListHeaderComponent={listHeaderComponent ?? null}
         renderItem={({ item }) => {
           if (item.kind === 'contact') {
             return (

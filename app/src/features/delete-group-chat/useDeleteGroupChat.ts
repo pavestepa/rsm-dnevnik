@@ -1,9 +1,15 @@
-import { useMutation } from '@tanstack/react-query';
+import { chatApi, invalidateChatListQueries } from '@/entities/chat';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-export function useDeleteGroupChat() {
+export function useDeleteGroupChat(chatId: string) {
+  const queryClient = useQueryClient();
+
   return useMutation({
-    mutationFn: async (_chatId: string) => {
-      throw new Error('deleteGroupChat is not implemented');
+    mutationFn: () => chatApi.deleteGroup(chatId),
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: ['chat', chatId] });
+      queryClient.removeQueries({ queryKey: ['messages', chatId] });
+      invalidateChatListQueries(queryClient, chatId);
     },
   });
 }

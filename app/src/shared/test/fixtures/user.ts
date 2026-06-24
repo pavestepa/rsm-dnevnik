@@ -1,4 +1,4 @@
-import type { User } from '@/entities/session';
+import type { User } from '@/shared/model/user';
 
 export function makeUser(overrides: Partial<User> = {}): User {
   return {

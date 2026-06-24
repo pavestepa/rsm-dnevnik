@@ -3,6 +3,7 @@ import { CreateGroupHeaderButton } from '@/widgets/chat-header';
 import { AddParticipantsScreen } from '@/screens/chats/AddParticipantsScreen';
 import { CreateGroupScreen } from '@/screens/chats/CreateGroupScreen';
 import { ChatInfoScreen } from '@/screens/chats/ChatInfoScreen';
+import { EditGroupScreen } from '@/screens/chats/EditGroupScreen';
 import { ChatListScreen } from '@/screens/chats/ChatListScreen';
 import { ChatMediaScreen } from '@/screens/chats/ChatMediaScreen';
 import { ChatScreen } from '@/screens/chats/ChatScreen';
@@ -72,6 +73,15 @@ export function ChatsStackNavigator() {
           ...chatDetailOptions,
           ...getHeaderLeadingOptions('back'),
           title: t('chats.infoTitle'),
+        }}
+      />
+      <Stack.Screen
+        name="EditGroup"
+        component={EditGroupScreen}
+        options={{
+          ...chatDetailOptions,
+          ...getHeaderLeadingOptions('back'),
+          title: t('groups.editGroup'),
         }}
       />
       <Stack.Screen

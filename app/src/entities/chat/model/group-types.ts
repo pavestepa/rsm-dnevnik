@@ -1,7 +1,3 @@
-import type { User } from '@/entities/session';
-
-export type UserSearchResult = Pick<User, 'id' | 'name' | 'phone' | 'avatarUrl'>;
-
 export type CreateGroupPayload = {
   title: string;
   participantIds: string[];
@@ -10,5 +6,6 @@ export type CreateGroupPayload = {
 
 export type UpdateGroupPayload = {
   title?: string;
+  description?: string | null;
   avatarMediaId?: string | null;
 };

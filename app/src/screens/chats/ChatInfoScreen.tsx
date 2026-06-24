@@ -1,7 +1,6 @@
 import { ChatAvatar } from '@/entities/chat';
-import { EditGroupTitleModal } from '@/widgets/group-modals';
 import { ParticipantActionsMenu } from '@/widgets/participant-menu';
-import { useLeaveGroup, useUpdateGroup } from '@/features/create-new-group';
+import { useLeaveGroup } from '@/features/create-new-group';
 import { useKickUser } from '@/features/kick-user';
 import { useChangeRole } from '@/features/change-role';
 import { useChatDetail } from '@/features/show-chat-data';
@@ -13,7 +12,6 @@ import {
 import type { ChatsStackScreenProps } from '@/app/navigation/types';
 import { useAuthStore } from '@/entities/session';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -32,13 +30,9 @@ export function ChatInfoScreen({ navigation, route }: ChatsStackScreenProps<'Cha
   const currentUserId = useAuthStore((state) => state.user?.id);
 
   const chatQuery = useChatDetail(chatId);
-  const updateGroup = useUpdateGroup(chatId);
   const removeParticipant = useKickUser(chatId);
   const updateParticipantRole = useChangeRole(chatId);
   const leaveGroup = useLeaveGroup(chatId);
-
-  const [editTitleVisible, setEditTitleVisible] = useState(false);
-  const [draftTitle, setDraftTitle] = useState('');
 
   if (chatQuery.isLoading) {
     return (
@@ -69,25 +63,6 @@ export function ChatInfoScreen({ navigation, route }: ChatsStackScreenProps<'Cha
     member: t('groups.member'),
   };
 
-  const openEditTitle = () => {
-    setDraftTitle(chat.title ?? chat.displayName);
-    setEditTitleVisible(true);
-  };
-
-  const handleSaveTitle = async () => {
-    const trimmed = draftTitle.trim();
-    if (!trimmed) {
-      return;
-    }
-
-    try {
-      await updateGroup.mutateAsync({ title: trimmed });
-      setEditTitleVisible(false);
-    } catch {
-      Alert.alert(t('groups.updateFailedTitle'), t('groups.updateFailedMessage'));
-    }
-  };
-
   const handleLeaveGroup = () => {
     Alert.alert(t('groups.leaveTitle'), t('groups.leaveMessage'), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -104,8 +79,7 @@ export function ChatInfoScreen({ navigation, route }: ChatsStackScreenProps<'Cha
   };
 
   return (
-    <>
-      <ScrollView
+    <ScrollView
         style={{ backgroundColor: colors.background }}
         contentContainerStyle={styles.content}
       >
@@ -117,6 +91,11 @@ export function ChatInfoScreen({ navigation, route }: ChatsStackScreenProps<'Cha
             size={112}
           />
           <Text style={[styles.name, { color: colors.text }]}>{chat.displayName}</Text>
+          {isGroup && chat.description ? (
+            <Text style={[styles.description, { color: colors.textSecondary }]}>
+              {chat.description}
+            </Text>
+          ) : null}
           {!isGroup && peer?.phone ? (
             <Text style={[styles.phone, { color: colors.textSecondary }]}>{peer.phone}</Text>
           ) : null}
@@ -130,7 +109,7 @@ export function ChatInfoScreen({ navigation, route }: ChatsStackScreenProps<'Cha
         {isGroup && canManage ? (
           <View style={[styles.section, { backgroundColor: colors.card }]}>
             <Pressable
-              onPress={openEditTitle}
+              onPress={() => navigation.navigate('EditGroup', { chatId })}
               style={({ pressed }) => [
                 styles.actionRow,
                 { backgroundColor: pressed ? colors.surface : colors.card },
@@ -138,7 +117,7 @@ export function ChatInfoScreen({ navigation, route }: ChatsStackScreenProps<'Cha
             >
               <MaterialCommunityIcons name="pencil-outline" size={22} color={colors.primary} />
               <Text style={[styles.actionText, { color: colors.text }]}>
-                {t('groups.editTitle')}
+                {t('groups.editGroup')}
               </Text>
               <MaterialCommunityIcons name="chevron-right" size={22} color={colors.textSecondary} />
             </Pressable>
@@ -289,17 +268,6 @@ export function ChatInfoScreen({ navigation, route }: ChatsStackScreenProps<'Cha
           </Pressable>
         ) : null}
       </ScrollView>
-
-      <EditGroupTitleModal
-        visible={editTitleVisible}
-        title={t('groups.editTitle')}
-        value={draftTitle}
-        saving={updateGroup.isPending}
-        onChangeTitle={setDraftTitle}
-        onClose={() => setEditTitleVisible(false)}
-        onSave={() => void handleSaveTitle()}
-      />
-    </>
   );
 }
 
@@ -327,6 +295,12 @@ const styles = StyleSheet.create({
   },
   phone: {
     fontSize: 15,
+  },
+  description: {
+    fontSize: 15,
+    textAlign: 'center',
+    paddingHorizontal: 24,
+    lineHeight: 20,
   },
   section: {
     marginHorizontal: 16,
