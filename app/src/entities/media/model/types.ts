@@ -1,5 +1,5 @@
 export type PresignUploadPayload = {
-  kind: 'avatar';
+  kind: 'avatar' | 'image' | 'document';
   mimeType: string;
   size: number;
   fileName?: string;

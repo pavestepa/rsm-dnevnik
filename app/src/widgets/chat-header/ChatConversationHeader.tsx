@@ -66,6 +66,7 @@ export function ChatConversationHeader({
   };
 
   const isGroup = chatQuery.data?.type === 'group';
+  const canOpenInfo = chatQuery.data?.type !== 'event';
 
   return (
     <View
@@ -83,8 +84,8 @@ export function ChatConversationHeader({
         <TouchableOpacity
           style={styles.titleArea}
           activeOpacity={0.7}
-          onPress={openInfo}
-          disabled={!chatQuery.data}
+          onPress={canOpenInfo ? openInfo : undefined}
+          disabled={!chatQuery.data || !canOpenInfo}
         >
           {chatQuery.isLoading ? (
             <ActivityIndicator size="small" color={colors.primary} />

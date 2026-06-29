@@ -3,4 +3,5 @@ export enum MediaKind {
   VIDEO = 'video',
   AUDIO = 'audio',
   AVATAR = 'avatar',
+  DOCUMENT = 'document',
 }

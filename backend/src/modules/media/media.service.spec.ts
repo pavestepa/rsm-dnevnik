@@ -7,6 +7,7 @@ import { Message } from '../messages/entities/message.entity';
 import { ChatParticipant } from '../chats/entities/chat-participant.entity';
 import { Chat } from '../chats/entities/chat.entity';
 import { User } from '../users/entities/user.entity';
+import { EventMedia } from '../events/entities/event-media.entity';
 import { S3Service } from './s3.service';
 import { MediaKind, MediaStatus } from '../../common/enums';
 
@@ -31,6 +32,10 @@ describe('MediaService ACL', () => {
         },
         { provide: getRepositoryToken(Chat), useValue: { findOne: jest.fn() } },
         { provide: getRepositoryToken(User), useValue: { findOne: jest.fn() } },
+        {
+          provide: getRepositoryToken(EventMedia),
+          useValue: { findOne: jest.fn() },
+        },
         {
           provide: S3Service,
           useValue: { getDownloadUrl: jest.fn(), getBucket: jest.fn() },

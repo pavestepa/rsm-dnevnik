@@ -2,6 +2,7 @@ import { MessageBubble } from '@/entities/message';
 import { MessageComposer } from '@/entities/message';
 import { MessageDateSeparator } from '@/entities/message';
 import { canDeleteMessageForEveryone } from '@/features/delete-message-for-everyone/lib/can-delete-for-everyone';
+import { isGroupLikeChatType } from '@/entities/chat';
 import { useChatDetail } from '@/features/show-chat-data';
 import { useChatRoom, useMarkChatRead } from '@/features/open-chat';
 import { useSendMessage } from '@/features/send-message';
@@ -327,7 +328,7 @@ export function ChatScreen({ navigation, route }: ChatsStackScreenProps<'Chat'>)
 
     const isOwn = item.message.sender.id === currentUserId;
     const showSenderName =
-      chatQuery.data?.type === 'group' && !isOwn;
+      isGroupLikeChatType(chatQuery.data?.type ?? 'direct') && !isOwn;
 
     return (
       <MessageBubble

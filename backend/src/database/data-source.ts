@@ -13,4 +13,5 @@ export default new DataSource({
   database: process.env.DB_NAME ?? 'rsm_dnevnik',
   entities: ['src/**/*.entity.ts'],
   migrations: ['src/database/migrations/*.ts'],
+  migrationsTransactionMode: 'each',
 });

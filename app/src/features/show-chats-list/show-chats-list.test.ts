@@ -8,6 +8,7 @@ jest.mock('@/entities/chat', () => ({
     list: jest.fn(),
     pin: jest.fn(),
   },
+  isVisibleInChatList: (type: string) => type !== 'event',
 }));
 
 const mockedChatApi = chatApi as jest.Mocked<typeof chatApi>;

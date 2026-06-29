@@ -18,6 +18,7 @@ import { Message } from '../messages/entities/message.entity';
 import { ChatParticipant } from '../chats/entities/chat-participant.entity';
 import { Chat } from '../chats/entities/chat.entity';
 import { User } from '../users/entities/user.entity';
+import { EventMedia } from '../events/entities/event-media.entity';
 
 const ALLOWED_MIME_TYPES: Record<MediaKind, string[]> = {
   [MediaKind.IMAGE]: ['image/jpeg', 'image/png', 'image/webp', 'image/gif'],
@@ -36,6 +37,17 @@ const ALLOWED_MIME_TYPES: Record<MediaKind, string[]> = {
     'image/heic',
     'image/heif',
   ],
+  [MediaKind.DOCUMENT]: [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+    'text/plain',
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+  ],
 };
 
 @Injectable()
@@ -51,6 +63,8 @@ export class MediaService {
     private readonly chatsRepository: Repository<Chat>,
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    @InjectRepository(EventMedia)
+    private readonly eventMediaRepository: Repository<EventMedia>,
     private readonly s3Service: S3Service,
   ) {}
 
@@ -147,6 +161,10 @@ export class MediaService {
 
     if (media.kind === MediaKind.AVATAR) {
       return this.isUserAvatarAccessible(mediaId, userId);
+    }
+
+    if (await this.isEventMediaAccessible(mediaId, userId)) {
+      return true;
     }
 
     return this.isGroupAvatarAccessible(mediaId, userId);
@@ -284,6 +302,22 @@ export class MediaService {
     }
 
     return this.sharesChatWith(userId, owner.id);
+  }
+
+  private async isEventMediaAccessible(
+    mediaId: string,
+    userId: string,
+  ): Promise<boolean> {
+    const eventMedia = await this.eventMediaRepository.findOne({
+      where: { mediaId },
+      relations: { event: true },
+    });
+
+    if (!eventMedia?.event || eventMedia.event.deletedAt) {
+      return false;
+    }
+
+    return this.isParticipantOfChat(eventMedia.event.groupChatId, userId);
   }
 
   private async isGroupAvatarAccessible(

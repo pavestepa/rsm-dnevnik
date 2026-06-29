@@ -6,3 +6,4 @@ export { ChatParticipantRole } from './chat-participant-role.enum';
 export { MessageReceiptStatus } from './message-receipt-status.enum';
 export { MessageDeliveryStatus } from './message-delivery-status.enum';
 export { ContactSource } from './contact-source.enum';
+export { EventMediaKind } from './event-media-kind.enum';

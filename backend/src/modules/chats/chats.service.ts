@@ -7,7 +7,7 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, IsNull, Repository } from 'typeorm';
+import { EntityManager, In, IsNull, Repository } from 'typeorm';
 import { Chat } from './entities/chat.entity';
 import { ChatParticipant } from './entities/chat-participant.entity';
 import { Message } from '../messages/entities/message.entity';
@@ -22,6 +22,7 @@ import {
   ChatListItemDto,
   ChatParticipantDto,
   CreateDirectChatDto,
+  CreateEventChatDto,
   CreateGroupChatDto,
   UpdateGroupChatDto,
 } from './dto/chat.dto';
@@ -138,6 +139,53 @@ export class ChatsService {
     return this.getChatById(userId, chat.id);
   }
 
+  async createEventChat(
+    userId: string,
+    dto: CreateEventChatDto,
+    manager?: EntityManager,
+  ): Promise<{ id: string }> {
+    const chatsRepository = manager
+      ? manager.getRepository(Chat)
+      : this.chatsRepository;
+    const participantsRepository = manager
+      ? manager.getRepository(ChatParticipant)
+      : this.participantsRepository;
+
+    const participantIds = [...new Set([userId, ...dto.participantIds])];
+    const users = await Promise.all(
+      participantIds.map((id) => this.usersService.findById(id)),
+    );
+
+    if (users.some((user) => !user)) {
+      throw new NotFoundException('One or more participants not found');
+    }
+
+    const chat = await chatsRepository.save(
+      chatsRepository.create({
+        type: ChatType.EVENT,
+        title: dto.title,
+        avatarMediaId: null,
+        createdById: userId,
+        ownerId: userId,
+      }),
+    );
+
+    await participantsRepository.save(
+      participantIds.map((participantId) =>
+        participantsRepository.create({
+          chatId: chat.id,
+          userId: participantId,
+          role:
+            participantId === userId
+              ? ChatParticipantRole.ADMIN
+              : ChatParticipantRole.MEMBER,
+        }),
+      ),
+    );
+
+    return { id: chat.id };
+  }
+
   async listChats(userId: string, query?: string): Promise<ChatListItemDto[]> {
     const participations = await this.participantsRepository.find({
       where: { userId, leftAt: IsNull() },
@@ -150,7 +198,11 @@ export class ChatsService {
 
     let items = await Promise.all(
       participations
-        .filter((participation) => !participation.chat.deletedAt)
+        .filter(
+          (participation) =>
+            !participation.chat.deletedAt &&
+            participation.chat.type !== ChatType.EVENT,
+        )
         .map((participation) =>
           this.toChatListItem(participation.chat, userId, participation),
         ),
@@ -560,7 +612,10 @@ export class ChatsService {
     }
 
     const chat = await this.chatsRepository.findOne({ where: { id: chatId } });
-    if (!chat || chat.type !== ChatType.GROUP) {
+    if (
+      !chat ||
+      (chat.type !== ChatType.GROUP && chat.type !== ChatType.EVENT)
+    ) {
       return false;
     }
 
@@ -756,7 +811,7 @@ export class ChatsService {
   }
 
   private resolveDisplayName(chat: Chat, userId: string): string {
-    if (chat.type === ChatType.GROUP) {
+    if (chat.type === ChatType.GROUP || chat.type === ChatType.EVENT) {
       return chat.title ?? 'Group chat';
     }
 

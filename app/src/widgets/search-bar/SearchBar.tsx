@@ -6,13 +6,24 @@ type SearchBarProps = {
   value: string;
   onChangeText: (text: string) => void;
   placeholder: string;
+  backgroundColor?: string;
 };
 
-export function SearchBar({ value, onChangeText, placeholder }: SearchBarProps) {
+export function SearchBar({
+  value,
+  onChangeText,
+  placeholder,
+  backgroundColor,
+}: SearchBarProps) {
   const { colors } = useAppTheme();
 
   return (
-    <View style={[styles.searchWrap, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.searchWrap,
+        { backgroundColor: backgroundColor ?? colors.background },
+      ]}
+    >
       <View style={[styles.searchBar, { backgroundColor: colors.surface }]}>
         <MaterialCommunityIcons name="magnify" size={20} color={colors.textSecondary} />
         <TextInput

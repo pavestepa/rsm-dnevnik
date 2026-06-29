@@ -56,9 +56,32 @@
     "profileSaveFailed": "Не удалось сохранить профиль."
   },
   "tabs": {
+    "diary": "Дневник",
     "chats": "Чаты",
     "contacts": "Контакты",
     "profile": "Профиль"
+  },
+  "diary": {
+    "title": "Дневник",
+    "searchPlaceholder": "Поиск записей",
+    "emptyTitle": "Пока нет записей",
+    "emptySubtitle": "Создайте первую запись в группе",
+    "more": "Ещё",
+    "createTitle": "Новая запись",
+    "editTitle": "Редактирование",
+    "eventTitle": "Запись",
+    "selectGroup": "Выберите группу",
+    "titleLabel": "Заголовок",
+    "bodyLabel": "Текст",
+    "addPhoto": "Добавить фото",
+    "addFile": "Добавить файл",
+    "save": "Сохранить",
+    "delete": "Удалить",
+    "deleteConfirmTitle": "Удалить запись?",
+    "deleteConfirmMessage": "Запись и её чат будут удалены.",
+    "filterSoon": "Фильтрация будет доступна позже.",
+    "documentPickerMissing": "Установите expo-document-picker для прикрепления файлов.",
+    "loadError": "Не удалось загрузить записи"
   },
   "settings": {
     "title": "Профиль",

@@ -228,6 +228,54 @@ describe('ChatsService', () => {
     expect(items[1].isPinned).toBe(false);
   });
 
+  it('excludes event chats from listChats', async () => {
+    const groupParticipation = {
+      ...baseChat.participants[0],
+      chat: {
+        ...baseChat,
+        id: 'group-chat-1',
+        type: ChatType.GROUP,
+        title: 'Team',
+      },
+    };
+    const eventParticipation = {
+      ...baseChat.participants[0],
+      chatId: 'event-chat-1',
+      chat: {
+        ...baseChat,
+        id: 'event-chat-1',
+        type: ChatType.EVENT,
+        title: 'Meetup',
+      },
+    };
+
+    participantsRepository.find.mockResolvedValue([
+      groupParticipation,
+      eventParticipation,
+    ] as ChatParticipant[]);
+
+    const toChatListItemSpy = jest.spyOn(
+      service as unknown as {
+        toChatListItem: (
+          chat: Chat,
+          userId: string,
+          participation: ChatParticipant,
+        ) => Promise<{ id: string }>;
+      },
+      'toChatListItem',
+    );
+    toChatListItemSpy.mockImplementation((_chat, _userId, participation) =>
+      Promise.resolve({
+        id: participation.chat.id,
+      }),
+    );
+
+    const items = await service.listChats('user-1');
+
+    expect(items).toHaveLength(1);
+    expect(items[0].id).toBe('group-chat-1');
+  });
+
   it('rejects adding participant when actor is not admin', async () => {
     const groupChat: Chat = {
       ...baseChat,

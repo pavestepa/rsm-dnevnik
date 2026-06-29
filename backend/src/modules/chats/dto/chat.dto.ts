@@ -30,6 +30,17 @@ export class CreateGroupChatDto {
   avatarMediaId?: string;
 }
 
+export class CreateEventChatDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(128)
+  title: string;
+
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  participantIds: string[];
+}
+
 export class UpdateGroupChatDto {
   @IsOptional()
   @IsString()

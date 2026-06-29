@@ -1,4 +1,4 @@
-export type ChatType = 'direct' | 'group';
+export type ChatType = 'direct' | 'group' | 'event';
 
 export type ChatLastMessage = {
   id: string;

@@ -1,5 +1,5 @@
 import { ChatAvatar } from '@/entities/chat';
-import { formatChatTime, formatLastMessagePreview } from '@/entities/chat';
+import { formatChatTime, formatLastMessagePreview, isGroupLikeChatType } from '@/entities/chat';
 import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
 import type { ChatListItem } from '@/entities/chat';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -22,7 +22,7 @@ export function ChatListItemRow({
   const hasUnread = chat.unreadCount > 0;
   const lastMessageTime = chat.lastMessage?.createdAt ?? chat.updatedAt;
   const senderName =
-    chat.type === 'group' && chat.lastMessage
+    isGroupLikeChatType(chat.type) && chat.lastMessage
       ? chat.participants.find((participant) => participant.userId === chat.lastMessage?.senderId)
           ?.name
       : undefined;

@@ -1,0 +1,1 @@
+export { EventChatCard } from './EventChatCard';

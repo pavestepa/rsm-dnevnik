@@ -25,7 +25,7 @@ export function patchChatListOnNewMessage(
     }
 
     const chat = current.find((item) => item.id === message.chatId);
-    if (!chat) {
+    if (!chat || chat.type === 'event') {
       return current;
     }
 

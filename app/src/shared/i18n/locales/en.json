@@ -56,9 +56,32 @@
     "profileSaveFailed": "Could not save profile."
   },
   "tabs": {
+    "diary": "Diary",
     "chats": "Chats",
     "contacts": "Contacts",
     "profile": "Profile"
+  },
+  "diary": {
+    "title": "Diary",
+    "searchPlaceholder": "Search entries",
+    "emptyTitle": "No entries yet",
+    "emptySubtitle": "Create your first group entry",
+    "more": "More",
+    "createTitle": "New entry",
+    "editTitle": "Edit entry",
+    "eventTitle": "Entry",
+    "selectGroup": "Select a group",
+    "titleLabel": "Title",
+    "bodyLabel": "Text",
+    "addPhoto": "Add photo",
+    "addFile": "Add file",
+    "save": "Save",
+    "delete": "Delete",
+    "deleteConfirmTitle": "Delete entry?",
+    "deleteConfirmMessage": "The entry and its chat will be deleted.",
+    "filterSoon": "Filtering will be available later.",
+    "documentPickerMissing": "Install expo-document-picker to attach files.",
+    "loadError": "Failed to load entries"
   },
   "settings": {
     "title": "Profile",

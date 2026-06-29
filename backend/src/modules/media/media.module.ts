@@ -8,10 +8,20 @@ import { Message } from '../messages/entities/message.entity';
 import { ChatParticipant } from '../chats/entities/chat-participant.entity';
 import { Chat } from '../chats/entities/chat.entity';
 import { User } from '../users/entities/user.entity';
+import { EventMedia } from '../events/entities/event-media.entity';
+import { Event } from '../events/entities/event.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Media, Message, ChatParticipant, Chat, User]),
+    TypeOrmModule.forFeature([
+      Media,
+      Message,
+      ChatParticipant,
+      Chat,
+      User,
+      EventMedia,
+      Event,
+    ]),
   ],
   controllers: [MediaController],
   providers: [MediaService, S3Service],

@@ -17,6 +17,7 @@ export type ProfileStackParamList = {
 };
 
 export type MainTabParamList = {
+  DiaryTab: undefined;
   ChatsTab: undefined;
   ContactsTab: undefined;
   ProfileTab: undefined;
@@ -40,6 +41,18 @@ export type SettingsStackParamList = {
   Settings: undefined;
 };
 
+export type DiaryStackParamList = {
+  DiaryList: undefined;
+  Event: { eventId: string };
+  CreateEvent: undefined;
+  EditEvent: { eventId: string };
+  EventChat: { chatId: string; typingSubtitle?: string };
+  EventGallery: {
+    images: Array<{ id: string; url: string }>;
+    initialIndex: number;
+  };
+};
+
 export type AuthStackScreenProps<T extends keyof AuthStackParamList> =
   NativeStackScreenProps<AuthStackParamList, T>;
 
@@ -61,5 +74,11 @@ export type SettingsStackScreenProps<T extends keyof SettingsStackParamList> =
 export type ContactsStackScreenProps<T extends keyof ContactsStackParamList> =
   CompositeScreenProps<
     NativeStackScreenProps<ContactsStackParamList, T>,
+    BottomTabScreenProps<MainTabParamList>
+  >;
+
+export type DiaryStackScreenProps<T extends keyof DiaryStackParamList> =
+  CompositeScreenProps<
+    NativeStackScreenProps<DiaryStackParamList, T>,
     BottomTabScreenProps<MainTabParamList>
   >;

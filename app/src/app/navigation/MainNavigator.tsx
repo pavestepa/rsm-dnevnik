@@ -1,5 +1,6 @@
 import { ChatsStackNavigator } from '@/app/navigation/ChatsStackNavigator';
 import { ContactsStackNavigator } from '@/app/navigation/ContactsStackNavigator';
+import { DiaryStackNavigator } from '@/app/navigation/DiaryStackNavigator';
 import { SettingsStackNavigator } from '@/app/navigation/SettingsStackNavigator';
 import { useChatSocketConnection, useStreamChatsList } from '@/app/bootstrap';
 import { useAppTheme } from '@/shared/lib/hooks/useAppTheme';
@@ -35,6 +36,17 @@ export function MainNavigator() {
         },
       }}
     >
+      <Tab.Screen
+        name="DiaryTab"
+        component={DiaryStackNavigator}
+        options={{
+          title: t('tabs.diary'),
+          sceneStyle: { backgroundColor: colors.chatWallpaper },
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="book-open-outline" size={size} color={color} />
+          ),
+        }}
+      />
       <Tab.Screen
         name="ChatsTab"
         component={ChatsStackNavigator}

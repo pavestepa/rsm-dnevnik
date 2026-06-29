@@ -16,6 +16,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { RealtimeModule } from './modules/realtime/realtime.module';
 import { PushModule } from './modules/push/push.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
+import { EventsModule } from './modules/events/events.module';
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
 import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
@@ -67,6 +68,7 @@ import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
     ChatsModule,
     MessagesModule,
     ContactsModule,
+    EventsModule,
     RealtimeModule,
     PushModule,
   ],
